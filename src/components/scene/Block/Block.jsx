@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { useBlockStore } from '../../../store/blockStore';
 import { snapToGrid } from '../../../utils/math/snapToGrid';
 import { isInsideWorld } from '../../../utils/math/isInsideWorld';
 import { getTexture } from '../../../utils/graphics/textureCache';
 
-export default function Block({ id, position, type }) {
-  const { addBlock, removeBlock, selectedBlockType, isDragging, startBuilding, availableBlocks, currentPlan } = useBlockStore();
+const Block = memo(({ id, position, type }) => {
+  const { addBlock, removeBlock, selectedBlockType, isDragging, startBuilding, availableBlocks, currentPlan, selectedBlocksIDs, selectBlock } = useBlockStore();
   const [hovered, setHovered] = useState(false);
   const [map, setMap] = useState(null);
 
   const blockConfig = availableBlocks.find((b) => b.id === type);
+  const isSelected = selectedBlocksIDs.includes(id);
 
   useEffect(() => {
     if (blockConfig?.texture) {
@@ -19,7 +20,6 @@ export default function Block({ id, position, type }) {
     }
   }, [blockConfig?.texture]);
 
-  // Transparent blocks fallback matching logic
   const isTransparent = type === 'mc:glass' || type === 'glass';
 
   return (
@@ -32,15 +32,23 @@ export default function Block({ id, position, type }) {
       onPointerOut={(e) => { e.stopPropagation(); setHovered(false); }}
       onPointerDown={(e) => {
         if (e.button === 2 || e.button === 1) return;
-        
         e.stopPropagation();
         
-        if (e.button === 0 && e.shiftKey) {
+        // Remove block on Shift + Left Click
+        if (e.button === 0 && e.shiftKey && e.altKey) {
            removeBlock(id);
            return;
         }
+        
+        // Select Block on Ctrl/Cmd + Left Click (or shift without alt)
+        if (e.button === 0 && (e.ctrlKey || e.metaKey || e.shiftKey)) {
+          selectBlock(id, true);
+          return;
+        }
 
+        // Add block on left click
         if (e.button === 0 && !e.altKey && !isDragging) {
+          selectBlock(id, false); // Single select
           startBuilding();
           const p = [
             position[0] + e.face.normal.x,
@@ -56,13 +64,15 @@ export default function Block({ id, position, type }) {
     >
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial 
-        color={map ? '#ffffff' : (blockConfig?.color || '#cccccc')}
+        color={isSelected ? '#aaddff' : (map ? '#ffffff' : (blockConfig?.color || '#cccccc'))}
         map={map}
         transparent={isTransparent}
         opacity={isTransparent ? 0.6 : 1}
-        emissive={hovered ? 'red' : 'black'}
-        emissiveIntensity={hovered ? 0.3 : 0}
+        emissive={isSelected ? '#0055ff' : (hovered ? 'white' : 'black')}
+        emissiveIntensity={isSelected ? 0.5 : (hovered ? 0.2 : 0)}
       />
     </mesh>
   );
-}
+});
+
+export default Block;

@@ -15,8 +15,26 @@ export default function Editor() {
         e.returnValue = '';
       }
     };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    const handleKeyDown = (e) => {
+      // Undo (Ctrl+Z or Cmd+Z)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        if (e.shiftKey) {
+          useBlockStore.getState().redo(); // Ctrl+Shift+Z for redo
+        } else {
+          useBlockStore.getState().undo();
+        }
+      }
+      // Redo (Ctrl+Y or Cmd+Y)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        useBlockStore.getState().redo();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   return (

@@ -14,15 +14,39 @@ const SidebarContainer = styled.div`
   flex-direction: column;
   gap: 15px;
   z-index: 10;
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
-  overflow-y: auto;
+  transition: transform 0.3s ease-in-out;
   
+  @media (max-width: 768px) {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform: translateX(${(props) => (props.$isOpen ? '0' : '-100%')});
+  }
+
   &::-webkit-scrollbar {
     width: 6px;
   }
   &::-webkit-scrollbar-thumb {
     background: #444;
     border-radius: 4px;
+  }
+`;
+
+const MobileToggle = styled.button`
+  display: none;
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  z-index: 20;
+  background: #333;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+
+  @media (max-width: 768px) {
+    display: block;
   }
 `;
 
@@ -57,8 +81,33 @@ const ActionButton = styled.button`
   }
 `;
 
+const UploadLabel = styled.label`
+  display: block;
+  width: 100%;
+  text-align: center;
+  background-color: #2a2a2a;
+  color: #aaa;
+  border: 1px dashed #555;
+  padding: 12px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 15px;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: #333;
+    color: #fff;
+    border-color: #777;
+  }
+
+  input {
+    display: none;
+  }
+`;
+
 export default function Sidebar() {
-  const { availableBlocks, selectedBlockType, setSelectedBlockType, startDrag, stopDrag, setBlocks } = useBlockStore();
+  const { availableBlocks, selectedBlockType, setSelectedBlockType, startDrag, stopDrag, setBlocks, addCustomBlockType } = useBlockStore();
+  const [isOpen, setIsOpen] = React.useState(false);
 
   useEffect(() => {
     const handleUp = () => stopDrag();
@@ -82,18 +131,52 @@ export default function Sidebar() {
     }
   };
 
-  return (
-    <SidebarContainer>
-      <Title>BlockForge</Title>
-      
-      <ButtonRow>
-        <ActionButton onClick={handleSave}>Salvar</ActionButton>
-        <ActionButton onClick={handleLoad}>Carregar</ActionButton>
-      </ButtonRow>
-      
-      <Title style={{ marginTop: 10 }}>Blocos</Title>
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-      {availableBlocks.map((block) => (
+    if (file.size > 2 * 1024 * 1024) {
+      alert('A imagem não pode passar de 2MB!');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target.result;
+      const newBlock = {
+        id: `custom-${Date.now()}`,
+        label: file.name.substring(0, 15),
+        texture: base64,
+        color: '#ffffff',
+      };
+      addCustomBlockType(newBlock);
+      setSelectedBlockType(newBlock.id);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <>
+      <MobileToggle onClick={() => setIsOpen(!isOpen)}>
+        {isOpen ? '✕ Fechar Menu' : '☰ Abrir Menu'}
+      </MobileToggle>
+
+      <SidebarContainer $isOpen={isOpen}>
+        <Title>BlockForge</Title>
+        
+        <ButtonRow>
+          <ActionButton onClick={handleSave}>Salvar</ActionButton>
+          <ActionButton onClick={handleLoad}>Carregar</ActionButton>
+        </ButtonRow>
+        
+        <Title style={{ marginTop: 10 }}>Blocos</Title>
+
+        <UploadLabel>
+          + Upload Imagem
+          <input type="file" accept="image/png, image/jpeg" onChange={handleFileUpload} />
+        </UploadLabel>
+
+        {availableBlocks.map((block) => (
         <BlockItem 
           key={block.id}
           block={block}
@@ -106,5 +189,6 @@ export default function Sidebar() {
         />
       ))}
     </SidebarContainer>
+    </>
   );
 }
