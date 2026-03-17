@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import { useBlockStore } from '../../../store/blockStore';
 import BlockItem from './BlockItem';
+import { saveProject, loadProject } from '../../../utils/storage/projectStorage';
 
 const SidebarContainer = styled.div`
   width: 250px;
@@ -14,6 +15,15 @@ const SidebarContainer = styled.div`
   gap: 15px;
   z-index: 10;
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+  overflow-y: auto;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+  }
 `;
 
 const Title = styled.h3`
@@ -26,15 +36,29 @@ const Title = styled.h3`
   letter-spacing: 1px;
 `;
 
-const BLOCKS = [
-  { id: 'wood', label: 'Wood Block', color: '#8B5A2B' },
-  { id: 'stone', label: 'Stone Block', color: '#888888' },
-  { id: 'grass', label: 'Grass Block', color: '#556B2F' },
-  { id: 'glass', label: 'Glass Block', color: '#ADD8E6' },
-];
+const ButtonRow = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+`;
+
+const ActionButton = styled.button`
+  flex: 1;
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #444;
+  padding: 8px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: #444;
+  }
+`;
 
 export default function Sidebar() {
-  const { selectedBlockType, setSelectedBlockType, startDrag, stopDrag } = useBlockStore();
+  const { availableBlocks, selectedBlockType, setSelectedBlockType, startDrag, stopDrag, setBlocks } = useBlockStore();
 
   useEffect(() => {
     const handleUp = () => stopDrag();
@@ -42,10 +66,34 @@ export default function Sidebar() {
     return () => window.removeEventListener('pointerup', handleUp);
   }, [stopDrag]);
 
+  const handleSave = () => {
+    const state = useBlockStore.getState();
+    if (saveProject(state.blocks)) {
+      alert('Projeto salvo com sucesso!');
+    }
+  };
+
+  const handleLoad = () => {
+    const data = loadProject();
+    if (data) {
+      setBlocks(data);
+    } else {
+      alert('Nenhum projeto foi encontrado.');
+    }
+  };
+
   return (
     <SidebarContainer>
-      <Title>Blocks</Title>
-      {BLOCKS.map((block) => (
+      <Title>BlockForge</Title>
+      
+      <ButtonRow>
+        <ActionButton onClick={handleSave}>Salvar</ActionButton>
+        <ActionButton onClick={handleLoad}>Carregar</ActionButton>
+      </ButtonRow>
+      
+      <Title style={{ marginTop: 10 }}>Blocos</Title>
+
+      {availableBlocks.map((block) => (
         <BlockItem 
           key={block.id}
           block={block}

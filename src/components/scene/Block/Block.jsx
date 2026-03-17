@@ -1,18 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBlockStore } from '../../../store/blockStore';
 import { snapToGrid } from '../../../utils/math/snapToGrid';
 import { isInsideWorld } from '../../../utils/math/isInsideWorld';
-
-const COLORS = {
-  wood: '#8B5A2B',
-  stone: '#888888',
-  grass: '#556B2F',
-  glass: '#ADD8E6',
-};
+import { getTexture } from '../../../utils/graphics/textureCache';
 
 export default function Block({ id, position, type }) {
-  const { addBlock, removeBlock, selectedBlockType, isDragging, startBuilding } = useBlockStore();
+  const { addBlock, removeBlock, selectedBlockType, isDragging, startBuilding, availableBlocks, currentPlan } = useBlockStore();
   const [hovered, setHovered] = useState(false);
+  const [map, setMap] = useState(null);
+
+  const blockConfig = availableBlocks.find((b) => b.id === type);
+
+  useEffect(() => {
+    if (blockConfig?.texture) {
+      getTexture(blockConfig.texture, (tex) => setMap(tex));
+    } else {
+      setMap(null);
+    }
+  }, [blockConfig?.texture]);
+
+  // Transparent blocks fallback matching logic
+  const isTransparent = type === 'mc:glass' || type === 'glass';
 
   return (
     <mesh 
@@ -23,18 +31,15 @@ export default function Block({ id, position, type }) {
       onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }}
       onPointerOut={(e) => { e.stopPropagation(); setHovered(false); }}
       onPointerDown={(e) => {
-        // Allow OrbitControls to handle right and middle clicks
         if (e.button === 2 || e.button === 1) return;
         
         e.stopPropagation();
         
-        // Remove block on Shift + Left Click
         if (e.button === 0 && e.shiftKey) {
            removeBlock(id);
            return;
         }
 
-        // Add block on left click
         if (e.button === 0 && !e.altKey && !isDragging) {
           startBuilding();
           const p = [
@@ -43,7 +48,7 @@ export default function Block({ id, position, type }) {
             position[2] + e.face.normal.z,
           ];
           const snapped = snapToGrid(p);
-          if (isInsideWorld(snapped)) {
+          if (isInsideWorld(snapped, currentPlan)) {
             addBlock(snapped, selectedBlockType);
           }
         }
@@ -51,9 +56,10 @@ export default function Block({ id, position, type }) {
     >
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial 
-        color={COLORS[type] || COLORS.wood} 
-        transparent={type === 'glass'}
-        opacity={type === 'glass' ? 0.6 : 1}
+        color={map ? '#ffffff' : (blockConfig?.color || '#cccccc')}
+        map={map}
+        transparent={isTransparent}
+        opacity={isTransparent ? 0.6 : 1}
         emissive={hovered ? 'red' : 'black'}
         emissiveIntensity={hovered ? 0.3 : 0}
       />

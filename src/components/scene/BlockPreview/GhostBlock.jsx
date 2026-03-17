@@ -5,7 +5,7 @@ import { snapToGrid } from '../../../utils/math/snapToGrid';
 import { isInsideWorld } from '../../../utils/math/isInsideWorld';
 
 export default function GhostBlock() {
-  const { isDragging, isBuilding, draggedType, selectedBlockType, addBlock } = useBlockStore();
+  const { isDragging, isBuilding, draggedType, selectedBlockType, addBlock, currentPlan } = useBlockStore();
   const meshRef = useRef();
   const currentPosRef = useRef(null);
   const isValidRef = useRef(false);
@@ -43,7 +43,7 @@ export default function GhostBlock() {
       meshRef.current.visible = isDragging; // Show phantom when dragging from sidebar
       currentPosRef.current = snapped;
       
-      const valid = isInsideWorld(snapped);
+      const valid = isInsideWorld(snapped, currentPlan);
       isValidRef.current = valid;
       meshRef.current.material.color.set(valid ? 'lime' : 'red');
 

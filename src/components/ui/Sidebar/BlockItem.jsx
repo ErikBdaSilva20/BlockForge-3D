@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { getTexture } from '../../../utils/graphics/textureCache';
 
 const Container = styled.div`
   display: flex;
@@ -25,11 +26,14 @@ const Container = styled.div`
   }
 `;
 
-const Preview = styled.div`
+const PreviewImage = styled.div`
   width: 32px;
   height: 32px;
   border-radius: 6px;
-  background: ${(props) => props.$color};
+  background-color: ${(props) => props.$color};
+  background-image: ${(props) => props.$texture ? `url(${props.$texture})` : 'none'};
+  background-size: cover;
+  image-rendering: pixelated;
   border: 2px solid rgba(255, 255, 255, 0.2);
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
 `;
@@ -42,6 +46,17 @@ const Label = styled.span`
 `;
 
 export default function BlockItem({ block, isSelected, onSelect, onDragStart }) {
+  const [textureUrl, setTextureUrl] = useState(null);
+
+  useEffect(() => {
+    if (block.texture) {
+      // Pre-load texture caching locally while capturing the url for background UI mapping
+      getTexture(block.texture, () => {
+        setTextureUrl(block.texture);
+      });
+    }
+  }, [block.texture]);
+
   return (
     <Container
       $selected={isSelected}
@@ -53,7 +68,7 @@ export default function BlockItem({ block, isSelected, onSelect, onDragStart }) 
         onDragStart();
       }}
     >
-      <Preview $color={block.color} />
+      <PreviewImage $color={block.color} $texture={textureUrl} />
       <Label>{block.label}</Label>
     </Container>
   );

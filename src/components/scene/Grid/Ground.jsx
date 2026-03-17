@@ -4,7 +4,7 @@ import { snapToGrid } from '../../../utils/math/snapToGrid';
 import { isInsideWorld } from '../../../utils/math/isInsideWorld';
 
 export default function Ground() {
-  const { isDragging, addBlock, selectedBlockType, startBuilding } = useBlockStore();
+  const { isDragging, addBlock, selectedBlockType, startBuilding, currentPlan } = useBlockStore();
 
   return (
     <mesh 
@@ -22,7 +22,7 @@ export default function Ground() {
         const p = e.point.clone();
         const pos = [p.x, 0, p.z];
         const snapped = snapToGrid(pos);
-        if (isInsideWorld(snapped)) {
+        if (isInsideWorld(snapped, currentPlan)) {
           addBlock(snapped, selectedBlockType);
         }
       }}
