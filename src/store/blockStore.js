@@ -111,14 +111,34 @@ export const useBlockStore = create((set, get) => ({
   
   clearSelection: () => set({ selectedBlocksIDs: [] }),
 
+  clearAllBlocks: () => {
+    get()._pushHistory([]);
+  },
+
+  // Returns the number of blocks that would be out of bounds for a given size
+  getOutOfBoundsCount: (sizeId) => {
+    const size = WORLD_SIZES.find(s => s.id === sizeId);
+    if (!size) return 0;
+    const { blocks } = get();
+    return blocks.filter(b => !isInsideWorldDynamic(b.position, size)).length;
+  },
+
+  // Sets new world size, optionally trimming out-of-bounds blocks
+  setWorldSize: (sizeId, trimBlocks = false) => {
+    const size = WORLD_SIZES.find(s => s.id === sizeId);
+    if (!size) return;
+    if (trimBlocks) {
+      const { blocks } = get();
+      const kept = blocks.filter(b => isInsideWorldDynamic(b.position, size));
+      get()._pushHistory(kept);
+    }
+    set({ worldSize: size });
+  },
+
   // UI Actions
   setSelectedBlockType: (type) => set({ selectedBlockType: type }),
   startDrag: (type) => set({ isDragging: true, draggedType: type }),
   stopDrag: () => set({ isDragging: false, draggedType: null }),
   toggleShadows: () => set((state) => ({ shadowsEnabled: !state.shadowsEnabled })),
   toggleWorldBounds: () => set((state) => ({ showWorldBounds: !state.showWorldBounds })),
-  setWorldSize: (sizeId) => {
-    const size = WORLD_SIZES.find(s => s.id === sizeId);
-    if (size) set({ worldSize: size });
-  },
 }));

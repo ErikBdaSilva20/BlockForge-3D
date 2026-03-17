@@ -195,7 +195,8 @@ export default function Sidebar() {
     startDrag, stopDrag, setBlocks, addCustomBlockType, 
     shadowsEnabled, toggleShadows, 
     showWorldBounds, toggleWorldBounds,
-    worldSize, setWorldSize 
+    worldSize, setWorldSize, clearAllBlocks, getOutOfBoundsCount,
+    blocks
   } = useBlockStore();
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -245,6 +246,32 @@ export default function Sidebar() {
     reader.readAsDataURL(file);
   };
 
+  const handleClearAll = () => {
+    if (blocks.length === 0) return;
+    const confirmed = window.confirm(
+      `Tem certeza que deseja apagar todos os ${blocks.length} blocos? Esta ação pode ser desfeita com Ctrl+Z.`
+    );
+    if (confirmed) clearAllBlocks();
+  };
+
+  const handleWorldSizeChange = (e) => {
+    const newSizeId = e.target.value;
+    const outCount = getOutOfBoundsCount(newSizeId);
+    
+    if (outCount > 0) {
+      const confirmed = window.confirm(
+        `Atenção: ${outCount} bloco(s) estão fora dos limites do tamanho selecionado e serão removidos. Deseja continuar?`
+      );
+      if (confirmed) {
+        setWorldSize(newSizeId, true);
+      }
+      // If not confirmed, don't change
+      return;
+    }
+    
+    setWorldSize(newSizeId, false);
+  };
+
   return (
     <>
       <MobileToggle onClick={() => setIsOpen(!isOpen)}>
@@ -260,6 +287,9 @@ export default function Sidebar() {
           <SmallBtn onClick={handleSave}>💾 Salvar</SmallBtn>
           <SmallBtn onClick={handleLoad}>📂 Carregar</SmallBtn>
         </ButtonRow>
+        <SmallBtn onClick={handleClearAll} style={{ color: '#ff6b6b' }}>
+          🗑️ Apagar Tudo ({blocks.length})
+        </SmallBtn>
 
         <Divider />
 
@@ -278,7 +308,7 @@ export default function Sidebar() {
 
         <SizeSelect 
           value={worldSize.id}
-          onChange={(e) => setWorldSize(e.target.value)}
+          onChange={handleWorldSizeChange}
         >
           {WORLD_SIZES.map((size) => (
             <option key={size.id} value={size.id}>
