@@ -25,13 +25,8 @@ const SidebarContainer = styled.div`
     transform: translateX(${(props) => (props.$isOpen ? '0' : '-100%')});
   }
 
-  &::-webkit-scrollbar {
-    width: 5px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #333;
-    border-radius: 4px;
-  }
+  &::-webkit-scrollbar { width: 5px; }
+  &::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
 `;
 
 const MobileToggle = styled.button`
@@ -47,10 +42,7 @@ const MobileToggle = styled.button`
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
-
-  @media (max-width: 768px) {
-    display: block;
-  }
+  @media (max-width: 768px) { display: block; }
 `;
 
 const Logo = styled.div`
@@ -89,12 +81,7 @@ const SmallBtn = styled.button`
   cursor: pointer;
   font-size: 12px;
   transition: all 0.15s;
-  
-  &:hover {
-    background-color: #2a2a2a;
-    color: #fff;
-    border-color: #555;
-  }
+  &:hover { background-color: #2a2a2a; color: #fff; border-color: #555; }
 `;
 
 const ToggleRow = styled.div`
@@ -121,7 +108,6 @@ const ToggleSwitch = styled.button`
   position: relative;
   background: ${(props) => (props.$active ? '#00e5ff' : '#333')};
   transition: background 0.2s;
-
   &::after {
     content: '';
     position: absolute;
@@ -145,10 +131,50 @@ const SizeSelect = styled.select`
   font-size: 12px;
   cursor: pointer;
   outline: none;
+  &:hover { border-color: #444; }
+`;
 
-  &:hover {
-    border-color: #444;
-  }
+const BrushBtn = styled.button`
+  width: 100%;
+  background-color: ${(props) => (props.$active ? '#00e5ff' : '#222')};
+  color: ${(props) => (props.$active ? '#000' : '#aaa')};
+  border: 1px solid ${(props) => (props.$active ? '#00e5ff' : '#333')};
+  padding: 7px 0;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.15s;
+  &:hover { opacity: 0.85; }
+`;
+
+const LayerIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: #1a1a1a;
+  border-radius: 6px;
+  border: 1px solid #00e5ff33;
+  font-size: 12px;
+  color: #00e5ff;
+`;
+
+const LayerBtn = styled.button`
+  background: #222;
+  color: #00e5ff;
+  border: 1px solid #00e5ff44;
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  &:hover { background: #00e5ff22; }
 `;
 
 const UploadLabel = styled.label`
@@ -163,16 +189,8 @@ const UploadLabel = styled.label`
   cursor: pointer;
   font-size: 12px;
   transition: all 0.2s;
-
-  &:hover {
-    background-color: #222;
-    color: #aaa;
-    border-color: #555;
-  }
-
-  input {
-    display: none;
-  }
+  &:hover { background-color: #222; color: #aaa; border-color: #555; }
+  input { display: none; }
 `;
 
 const Divider = styled.div`
@@ -189,6 +207,12 @@ const BlockList = styled.div`
   overflow-y: auto;
 `;
 
+const HelpText = styled.div`
+  font-size: 10px;
+  color: #555;
+  line-height: 1.4;
+`;
+
 export default function Sidebar() {
   const { 
     availableBlocks, selectedBlockType, setSelectedBlockType, 
@@ -196,7 +220,9 @@ export default function Sidebar() {
     shadowsEnabled, toggleShadows, 
     showWorldBounds, toggleWorldBounds,
     worldSize, setWorldSize, clearAllBlocks, getOutOfBoundsCount,
-    blocks
+    blocks,
+    brushMode, toggleBrushMode, brushLayer, setBrushLayer, brushMarks,
+    confirmBrushMarks, clearBrushMarks
   } = useBlockStore();
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -222,6 +248,31 @@ export default function Sidebar() {
     }
   };
 
+  const handleClearAll = () => {
+    if (blocks.length === 0) return;
+    const confirmed = window.confirm(
+      `Tem certeza que deseja apagar todos os ${blocks.length} blocos? Esta ação pode ser desfeita com Ctrl+Z.`
+    );
+    if (confirmed) clearAllBlocks();
+  };
+
+  const handleWorldSizeChange = (e) => {
+    const newSizeId = e.target.value;
+    const outCount = getOutOfBoundsCount(newSizeId);
+    
+    if (outCount > 0) {
+      const confirmed = window.confirm(
+        `Atenção: ${outCount} bloco(s) estão fora dos limites do tamanho selecionado e serão removidos. Deseja continuar?`
+      );
+      if (confirmed) {
+        setWorldSize(newSizeId, true);
+      }
+      return;
+    }
+    
+    setWorldSize(newSizeId, false);
+  };
+
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -244,32 +295,6 @@ export default function Sidebar() {
       setSelectedBlockType(newBlock.id);
     };
     reader.readAsDataURL(file);
-  };
-
-  const handleClearAll = () => {
-    if (blocks.length === 0) return;
-    const confirmed = window.confirm(
-      `Tem certeza que deseja apagar todos os ${blocks.length} blocos? Esta ação pode ser desfeita com Ctrl+Z.`
-    );
-    if (confirmed) clearAllBlocks();
-  };
-
-  const handleWorldSizeChange = (e) => {
-    const newSizeId = e.target.value;
-    const outCount = getOutOfBoundsCount(newSizeId);
-    
-    if (outCount > 0) {
-      const confirmed = window.confirm(
-        `Atenção: ${outCount} bloco(s) estão fora dos limites do tamanho selecionado e serão removidos. Deseja continuar?`
-      );
-      if (confirmed) {
-        setWorldSize(newSizeId, true);
-      }
-      // If not confirmed, don't change
-      return;
-    }
-    
-    setWorldSize(newSizeId, false);
   };
 
   return (
@@ -316,6 +341,38 @@ export default function Sidebar() {
             </option>
           ))}
         </SizeSelect>
+
+        <Divider />
+
+        {/* ---- BRUSH MODE ---- */}
+        <SectionLabel>Modo Pincel</SectionLabel>
+        
+        <BrushBtn $active={brushMode} onClick={toggleBrushMode}>
+          {brushMode ? '✓ Pincel Ativado' : '🖌️ Ativar Pincel'}
+        </BrushBtn>
+
+        {brushMode && (
+          <>
+            <LayerIndicator>
+              <LayerBtn onClick={() => setBrushLayer(brushLayer - 1)}>−</LayerBtn>
+              <span>Camada: {brushLayer}</span>
+              <LayerBtn onClick={() => setBrushLayer(brushLayer + 1)}>+</LayerBtn>
+            </LayerIndicator>
+
+            <ButtonRow>
+              <SmallBtn onClick={confirmBrushMarks} style={{ color: '#4cff88', borderColor: '#4cff8844' }}>
+                ✓ Confirmar ({brushMarks.length})
+              </SmallBtn>
+              <SmallBtn onClick={clearBrushMarks} style={{ color: '#ff6b6b' }}>
+                ✕ Limpar
+              </SmallBtn>
+            </ButtonRow>
+
+            <HelpText>
+              Segure o mouse e arraste para marcar. Use scroll para mudar camada. Clique em Confirmar para construir.
+            </HelpText>
+          </>
+        )}
 
         <Divider />
 

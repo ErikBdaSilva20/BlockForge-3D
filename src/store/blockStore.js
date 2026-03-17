@@ -32,7 +32,12 @@ export const useBlockStore = create((set, get) => ({
   draggedType: null,
   shadowsEnabled: false,
   showWorldBounds: true,
-  worldSize: WORLD_SIZES[1], // Default: Medium (16x16x16)
+  worldSize: WORLD_SIZES[1],
+
+  // Brush Mode
+  brushMode: false,
+  brushLayer: 0,
+  brushMarks: [], // array of [x, y, z]
 
   // History Methods
   _pushHistory: (newBlocks) => {
@@ -141,4 +146,55 @@ export const useBlockStore = create((set, get) => ({
   stopDrag: () => set({ isDragging: false, draggedType: null }),
   toggleShadows: () => set((state) => ({ shadowsEnabled: !state.shadowsEnabled })),
   toggleWorldBounds: () => set((state) => ({ showWorldBounds: !state.showWorldBounds })),
+
+  // Brush Mode Actions
+  toggleBrushMode: () => set((state) => ({
+    brushMode: !state.brushMode,
+    brushMarks: [],
+    brushLayer: 0,
+  })),
+
+  setBrushLayer: (y) => {
+    const ws = get().worldSize;
+    const clamped = Math.max(0, Math.min(y, ws.height));
+    set({ brushLayer: clamped });
+  },
+
+  addBrushMark: (position) => {
+    const ws = get().worldSize;
+    if (!isInsideWorldDynamic(position, ws)) return;
+    set((state) => {
+      const key = position.join(',');
+      const exists = state.brushMarks.some(m => m.join(',') === key);
+      if (exists) return state;
+      return { brushMarks: [...state.brushMarks, position] };
+    });
+  },
+
+  removeBrushMark: (position) => {
+    const key = position.join(',');
+    set((state) => ({
+      brushMarks: state.brushMarks.filter(m => m.join(',') !== key)
+    }));
+  },
+
+  confirmBrushMarks: () => {
+    const { brushMarks, selectedBlockType, blocks, worldSize } = get();
+    if (brushMarks.length === 0) return;
+    
+    const newBlocks = [...blocks];
+    for (const pos of brushMarks) {
+      if (!isInsideWorldDynamic(pos, worldSize)) continue;
+      const exists = newBlocks.find(
+        b => b.position[0] === pos[0] && b.position[1] === pos[1] && b.position[2] === pos[2]
+      );
+      if (!exists) {
+        newBlocks.push({ id: uuidv4(), position: pos, type: selectedBlockType });
+      }
+    }
+    get()._pushHistory(newBlocks);
+    set({ brushMarks: [] });
+  },
+
+  clearBrushMarks: () => set({ brushMarks: [] }),
 }));
