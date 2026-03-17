@@ -311,10 +311,10 @@ export default function Sidebar() {
         <ButtonRow>
           <SmallBtn onClick={handleSave}>💾 Salvar</SmallBtn>
           <SmallBtn onClick={handleLoad}>📂 Carregar</SmallBtn>
+          <SmallBtn onClick={handleClearAll} style={{ color: '#ff6b6b', flex: '0 0 auto', padding: '7px 10px' }}>
+            🗑️
+          </SmallBtn>
         </ButtonRow>
-        <SmallBtn onClick={handleClearAll} style={{ color: '#ff6b6b' }}>
-          🗑️ Apagar Tudo ({blocks.length})
-        </SmallBtn>
 
         <Divider />
 

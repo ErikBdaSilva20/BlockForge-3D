@@ -163,6 +163,11 @@ export const useBlockStore = create((set, get) => ({
   addBrushMark: (position) => {
     const ws = get().worldSize;
     if (!isInsideWorldDynamic(position, ws)) return;
+    // Don't mark where a block already exists
+    const blockExists = get().blocks.some(
+      b => b.position[0] === position[0] && b.position[1] === position[1] && b.position[2] === position[2]
+    );
+    if (blockExists) return;
     set((state) => {
       const key = position.join(',');
       const exists = state.brushMarks.some(m => m.join(',') === key);

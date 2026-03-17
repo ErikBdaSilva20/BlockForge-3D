@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import Scene from '../components/scene/Scene';
 import Sidebar from '../components/ui/Sidebar/Sidebar';
+import ShortcutsPanel from '../components/ui/ShortcutsPanel/ShortcutsPanel';
 import { useBlockStore } from '../store/blockStore';
 
 export default function Editor() {
   useEffect(() => {
-    // Carregar blocos da API
     useBlockStore.getState().loadBlocksFromAPI();
 
     const handleBeforeUnload = (e) => {
@@ -16,19 +16,18 @@ export default function Editor() {
       }
     };
     const handleKeyDown = (e) => {
-      // Undo (Ctrl+Z or Cmd+Z)
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         if (e.shiftKey) {
-          useBlockStore.getState().redo(); // Ctrl+Shift+Z for redo
+          useBlockStore.getState().redo();
         } else {
           useBlockStore.getState().undo();
         }
       }
-      // Redo (Ctrl+Y or Cmd+Y)
       if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
         useBlockStore.getState().redo();
       }
     };
+    window.addEventListener('beforeunload', handleBeforeUnload);
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
@@ -42,7 +41,9 @@ export default function Editor() {
       <Sidebar />
       <div style={{ flex: 1, position: 'relative' }}>
         <Scene />
+        <ShortcutsPanel />
       </div>
     </div>
   );
 }
+
