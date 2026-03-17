@@ -20,7 +20,6 @@ export const useBlockStore = create((set, get) => ({
   currentPlan: 'free',
   isDragging: false,
   draggedType: null,
-  isBuilding: false,
   shadowsEnabled: false,
 
   // History Methods
@@ -104,7 +103,5 @@ export const useBlockStore = create((set, get) => ({
   setSelectedBlockType: (type) => set({ selectedBlockType: type }),
   startDrag: (type) => set({ isDragging: true, draggedType: type }),
   stopDrag: () => set({ isDragging: false, draggedType: null }),
-  startBuilding: () => set({ isBuilding: true }),
-  stopBuilding: () => set({ isBuilding: false }),
   toggleShadows: () => set((state) => ({ shadowsEnabled: !state.shadowsEnabled })),
 }));

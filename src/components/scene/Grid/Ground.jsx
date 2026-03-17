@@ -4,7 +4,7 @@ import { snapToGrid } from '../../../utils/math/snapToGrid';
 import { isInsideWorld } from '../../../utils/math/isInsideWorld';
 
 export default function Ground() {
-  const { isDragging, addBlock, selectedBlockType, startBuilding, currentPlan, clearSelection } = useBlockStore();
+  const { isDragging, addBlock, selectedBlockType, currentPlan, clearSelection } = useBlockStore();
 
   return (
     <mesh 
@@ -12,8 +12,8 @@ export default function Ground() {
       position={[0, -0.01, 0]} 
       userData={{ isTarget: true, isGround: true }}
       onClick={(e) => {
-        if (e.button !== 0 || e.altKey || isDragging) return;
-        if (e.shiftKey || e.ctrlKey || e.metaKey) return;
+        if (e.button !== 0 || isDragging) return;
+        if (e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return;
         e.stopPropagation();
         
         clearSelection();
@@ -24,12 +24,6 @@ export default function Ground() {
         if (isInsideWorld(snapped, currentPlan)) {
           addBlock(snapped, selectedBlockType);
         }
-      }}
-      onPointerDown={(e) => {
-        if (e.button !== 0 || e.altKey || isDragging) return;
-        if (e.shiftKey || e.ctrlKey || e.metaKey) return;
-        e.stopPropagation();
-        startBuilding();
       }}
     >
       <planeGeometry args={[100, 100]} />

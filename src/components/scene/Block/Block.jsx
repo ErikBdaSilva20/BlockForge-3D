@@ -5,7 +5,7 @@ import { isInsideWorld } from '../../../utils/math/isInsideWorld';
 import { getTexture } from '../../../utils/graphics/textureCache';
 
 const Block = memo(({ id, position, type }) => {
-  const { addBlock, removeBlock, selectedBlockType, isDragging, startBuilding, availableBlocks, currentPlan, selectedBlocksIDs, selectBlock, shadowsEnabled } = useBlockStore();
+  const { addBlock, removeBlock, selectedBlockType, isDragging, availableBlocks, currentPlan, selectedBlocksIDs, selectBlock, shadowsEnabled } = useBlockStore();
   const [hovered, setHovered] = useState(false);
   const [map, setMap] = useState(null);
 
@@ -31,23 +31,23 @@ const Block = memo(({ id, position, type }) => {
       onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }}
       onPointerOut={(e) => { e.stopPropagation(); setHovered(false); }}
       onClick={(e) => {
-        if (e.button === 2 || e.button === 1) return;
+        if (e.button !== 0) return;
         e.stopPropagation();
         
-        // Remove block on Shift + Alt + Click
-        if (e.button === 0 && e.shiftKey && e.altKey) {
+        // Remove block: Shift + Alt + Click
+        if (e.shiftKey && e.altKey) {
            removeBlock(id);
            return;
         }
         
-        // Select Block on Ctrl/Cmd + Click (or shift without alt)
-        if (e.button === 0 && (e.ctrlKey || e.metaKey || e.shiftKey)) {
+        // Multi-select: Ctrl/Cmd + Click or Shift + Click
+        if (e.ctrlKey || e.metaKey || e.shiftKey) {
           selectBlock(id, true);
           return;
         }
 
-        // Add block on left click (single click only)
-        if (e.button === 0 && !e.altKey && !isDragging) {
+        // Normal click: select block + add adjacent block
+        if (!e.altKey && !isDragging) {
           selectBlock(id, false);
           const p = [
             position[0] + e.face.normal.x,
@@ -59,12 +59,6 @@ const Block = memo(({ id, position, type }) => {
             addBlock(snapped, selectedBlockType);
           }
         }
-      }}
-      onPointerDown={(e) => {
-        if (e.button !== 0 || e.altKey || isDragging) return;
-        if (e.shiftKey || e.ctrlKey || e.metaKey) return;
-        e.stopPropagation();
-        startBuilding();
       }}
     >
       <boxGeometry args={[1, 1, 1]} />

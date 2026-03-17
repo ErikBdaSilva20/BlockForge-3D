@@ -5,28 +5,18 @@ import { snapToGrid } from '../../../utils/math/snapToGrid';
 import { isInsideWorld } from '../../../utils/math/isInsideWorld';
 
 export default function GhostBlock() {
-  const { isDragging, isBuilding, draggedType, selectedBlockType, addBlock, currentPlan } = useBlockStore();
+  const { isDragging, draggedType, addBlock, currentPlan } = useBlockStore();
   const meshRef = useRef();
   const currentPosRef = useRef(null);
   const isValidRef = useRef(false);
-  const localLastBuiltRef = useRef(null);
-  const frameSkipRef = useRef(0);
   
   const { raycaster, camera, pointer, scene } = useThree();
 
-  const activeType = isDragging ? draggedType : selectedBlockType;
-  const isHandlingPreview = isDragging || isBuilding;
-
   useFrame(() => {
-    if (!isHandlingPreview || !meshRef.current) {
+    // Ghost block only appears during sidebar drag
+    if (!isDragging || !meshRef.current) {
       if (meshRef.current) meshRef.current.visible = false;
       return;
-    }
-
-    // Throttle: only process every 3rd frame during continuous build
-    if (isBuilding) {
-      frameSkipRef.current++;
-      if (frameSkipRef.current % 3 !== 0) return;
     }
     
     raycaster.setFromCamera(pointer, camera);
@@ -47,20 +37,12 @@ export default function GhostBlock() {
       
       const snapped = snapToGrid(p);
       meshRef.current.position.set(...snapped);
-      meshRef.current.visible = isDragging;
+      meshRef.current.visible = true;
       currentPosRef.current = snapped;
       
       const valid = isInsideWorld(snapped, currentPlan);
       isValidRef.current = valid;
       meshRef.current.material.color.set(valid ? 'lime' : 'red');
-
-      if (isBuilding && valid) {
-         const posKey = snapped.join(',');
-         if (posKey !== localLastBuiltRef.current) {
-             addBlock(snapped, activeType);
-             localLastBuiltRef.current = posKey;
-         }
-      }
     } else {
       meshRef.current.visible = false;
       currentPosRef.current = null;
@@ -75,14 +57,13 @@ export default function GhostBlock() {
         state.addBlock(currentPosRef.current, state.draggedType);
       }
       state.stopDrag();
-      state.stopBuilding();
-      localLastBuiltRef.current = null;
-      frameSkipRef.current = 0;
     };
     
     window.addEventListener('pointerup', handleUp);
     return () => window.removeEventListener('pointerup', handleUp);
   }, []);
+
+  if (!isDragging) return null;
 
   return (
     <mesh ref={meshRef} name="Ghost" userData={{ isPreview: true }} visible={false}>
