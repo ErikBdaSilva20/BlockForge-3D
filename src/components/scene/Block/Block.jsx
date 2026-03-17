@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useBlockStore } from '../../../store/blockStore';
 import { snapToGrid } from '../../../utils/math/snapToGrid';
+import { isInsideWorld } from '../../../utils/math/isInsideWorld';
 
 const COLORS = {
   wood: '#8B5A2B',
@@ -10,7 +11,8 @@ const COLORS = {
 };
 
 export default function Block({ id, position, type }) {
-  const { addBlock, selectedBlockType, isDragging } = useBlockStore();
+  const { addBlock, removeBlock, selectedBlockType, isDragging, startBuilding, setLastBuiltPos } = useBlockStore();
+  const [hovered, setHovered] = useState(false);
 
   return (
     <mesh 
@@ -18,16 +20,30 @@ export default function Block({ id, position, type }) {
       castShadow 
       receiveShadow 
       userData={{ isTarget: true, isBlock: true, id, type }}
-      onClick={(e) => {
+      onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }}
+      onPointerOut={(e) => { e.stopPropagation(); setHovered(false); }}
+      onPointerDown={(e) => {
         e.stopPropagation();
-        if (!isDragging) {
+        
+        // Remove block on right click
+        if (e.button === 2) {
+           removeBlock(id);
+           return;
+        }
+
+        // Add block on left click
+        if (e.button === 0 && !e.altKey && !isDragging) {
+          startBuilding();
           const p = [
             position[0] + e.face.normal.x,
             position[1] + e.face.normal.y,
             position[2] + e.face.normal.z,
           ];
           const snapped = snapToGrid(p);
-          addBlock(snapped, selectedBlockType);
+          if (isInsideWorld(snapped)) {
+            addBlock(snapped, selectedBlockType);
+            setLastBuiltPos(snapped.join(','));
+          }
         }
       }}
     >
@@ -36,6 +52,8 @@ export default function Block({ id, position, type }) {
         color={COLORS[type] || COLORS.wood} 
         transparent={type === 'glass'}
         opacity={type === 'glass' ? 0.6 : 1}
+        emissive={hovered ? 'red' : 'black'}
+        emissiveIntensity={hovered ? 0.3 : 0}
       />
     </mesh>
   );

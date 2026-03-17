@@ -1,42 +1,29 @@
 import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import { useBlockStore } from '../../../store/blockStore';
+import BlockItem from './BlockItem';
 
 const SidebarContainer = styled.div`
   width: 250px;
   height: 100vh;
-  background-color: #222;
-  border-right: 1px solid #333;
-  padding: 20px;
+  background-color: #1e1e1e;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 24px 20px;
   display: flex;
   flex-direction: column;
   gap: 15px;
   z-index: 10;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
 `;
 
-const BlockItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 15px;
-  background-color: ${(props) => (props.$selected ? '#444' : '#333')};
-  border-radius: 8px;
-  cursor: grab;
-  user-select: none;
-  transition: background-color 0.2s;
-  
-  &:active {
-    cursor: grabbing;
-  }
-`;
-
-const ColorPreview = styled.div`
-  width: 30px;
-  height: 30px;
-  border-radius: 4px;
-  background-color: ${(props) => props.$color};
-  border: 2px solid #555;
+const Title = styled.h3`
+  margin: 0 0 10px 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 `;
 
 const BLOCKS = [
@@ -57,25 +44,18 @@ export default function Sidebar() {
 
   return (
     <SidebarContainer>
-      <h3 style={{ margin: 0, paddingBottom: 10, borderBottom: '1px solid #444' }}>Blocks</h3>
+      <Title>Blocks</Title>
       {BLOCKS.map((block) => (
         <BlockItem 
           key={block.id}
-          $selected={selectedBlockType === block.id}
-          onClick={() => setSelectedBlockType(block.id)}
-          onPointerDown={(e) => {
-            e.preventDefault();
-            // Free the pointer from this element so the R3F Canvas can receive hover events
-            if (e.target.hasPointerCapture(e.pointerId)) {
-               e.target.releasePointerCapture(e.pointerId);
-            }
+          block={block}
+          isSelected={selectedBlockType === block.id}
+          onSelect={() => setSelectedBlockType(block.id)}
+          onDragStart={() => {
             setSelectedBlockType(block.id);
             startDrag(block.id);
           }}
-        >
-          <ColorPreview $color={block.color} />
-          <span>{block.label}</span>
-        </BlockItem>
+        />
       ))}
     </SidebarContainer>
   );
