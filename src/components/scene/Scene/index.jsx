@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import Lights from '../Lights';
 import Ground from '../Grid/Ground';
 import GridHelper from '../Grid/GridHelper';
+import WorldBoundsBox from '../Grid/WorldBoundsBox';
 import Block from '../Block/Block';
 import GhostBlock from '../BlockPreview/GhostBlock';
 import World from '../World/World';
@@ -17,7 +18,7 @@ export default function Scene() {
     <Canvas 
       shadows={shadowsEnabled}
       onContextMenu={(e) => e.preventDefault()}
-      camera={{ position: [10, 10, 10], fov: 50 }}
+      camera={{ position: [12, 12, 12], fov: 50 }}
     >
       <color attach="background" args={['#000000']} />
       <Lights />
@@ -30,7 +31,8 @@ export default function Scene() {
           RIGHT: THREE.MOUSE.ROTATE 
         }}
         minDistance={5}
-        maxDistance={35}
+        maxDistance={45}
+        maxPolarAngle={Math.PI / 2 - 0.05}
         enableDamping
         dampingFactor={0.05}
       />
@@ -38,6 +40,7 @@ export default function Scene() {
       <World>
         <Ground />
         <GridHelper />
+        <WorldBoundsBox />
         
         {blocks.map((block) => (
           <Block key={block.id} id={block.id} position={block.position} type={block.type} />

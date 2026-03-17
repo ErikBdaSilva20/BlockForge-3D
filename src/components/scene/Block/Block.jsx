@@ -1,11 +1,10 @@
 import React, { useState, useEffect, memo } from 'react';
 import { useBlockStore } from '../../../store/blockStore';
 import { snapToGrid } from '../../../utils/math/snapToGrid';
-import { isInsideWorld } from '../../../utils/math/isInsideWorld';
 import { getTexture } from '../../../utils/graphics/textureCache';
 
 const Block = memo(({ id, position, type }) => {
-  const { addBlock, removeBlock, selectedBlockType, isDragging, availableBlocks, currentPlan, selectedBlocksIDs, selectBlock, shadowsEnabled } = useBlockStore();
+  const { addBlock, removeBlock, selectedBlockType, isDragging, availableBlocks, worldSize, selectedBlocksIDs, selectBlock, shadowsEnabled } = useBlockStore();
   const [hovered, setHovered] = useState(false);
   const [map, setMap] = useState(null);
 
@@ -22,6 +21,13 @@ const Block = memo(({ id, position, type }) => {
 
   const isTransparent = type === 'mc:glass' || type === 'glass';
 
+  const isInsideDynamic = (pos) => {
+    const [x, y, z] = pos;
+    const halfW = worldSize.width / 2;
+    const halfD = worldSize.depth / 2;
+    return x >= -halfW && x <= halfW && y >= 0 && y <= worldSize.height && z >= -halfD && z <= halfD;
+  };
+
   return (
     <mesh 
       position={position} 
@@ -34,19 +40,16 @@ const Block = memo(({ id, position, type }) => {
         if (e.button !== 0) return;
         e.stopPropagation();
         
-        // Remove block: Shift + Alt + Click
         if (e.shiftKey && e.altKey) {
            removeBlock(id);
            return;
         }
         
-        // Multi-select: Ctrl/Cmd + Click or Shift + Click
         if (e.ctrlKey || e.metaKey || e.shiftKey) {
           selectBlock(id, true);
           return;
         }
 
-        // Normal click: select block + add adjacent block
         if (!e.altKey && !isDragging) {
           selectBlock(id, false);
           const p = [
@@ -55,7 +58,7 @@ const Block = memo(({ id, position, type }) => {
             position[2] + e.face.normal.z,
           ];
           const snapped = snapToGrid(p);
-          if (isInsideWorld(snapped, currentPlan)) {
+          if (isInsideDynamic(snapped)) {
             addBlock(snapped, selectedBlockType);
           }
         }

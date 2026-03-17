@@ -3,17 +3,19 @@ import styled from 'styled-components';
 import { useBlockStore } from '../../../store/blockStore';
 import BlockItem from './BlockItem';
 import { saveProject, loadProject } from '../../../utils/storage/projectStorage';
+import { WORLD_SIZES } from '../../../utils/constants/worldSizes';
 
 const SidebarContainer = styled.div`
-  width: 250px;
+  width: 260px;
   height: 100vh;
-  background-color: #1e1e1e;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 24px 20px;
+  background-color: #151515;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 20px 16px;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 8px;
   z-index: 10;
+  overflow-y: auto;
   transition: transform 0.3s ease-in-out;
   
   @media (max-width: 768px) {
@@ -24,10 +26,10 @@ const SidebarContainer = styled.div`
   }
 
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 5px;
   }
   &::-webkit-scrollbar-thumb {
-    background: #444;
+    background: #333;
     border-radius: 4px;
   }
 `;
@@ -38,46 +40,114 @@ const MobileToggle = styled.button`
   top: 15px;
   left: 15px;
   z-index: 20;
-  background: #333;
+  background: #222;
   color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 8px;
+  border: 1px solid #333;
+  padding: 8px 12px;
+  border-radius: 6px;
   cursor: pointer;
+  font-size: 13px;
 
   @media (max-width: 768px) {
     display: block;
   }
 `;
 
-const Title = styled.h3`
-  margin: 0 0 10px 0;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+const Logo = styled.div`
+  font-size: 18px;
+  font-weight: 700;
   color: #fff;
-  font-size: 16px;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+`;
+
+const SectionLabel = styled.div`
+  font-size: 10px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-top: 12px;
+  margin-bottom: 4px;
 `;
 
 const ButtonRow = styled.div`
   display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
+  gap: 6px;
 `;
 
-const ActionButton = styled.button`
+const SmallBtn = styled.button`
   flex: 1;
-  background-color: #333;
-  color: #fff;
-  border: 1px solid #444;
-  padding: 8px 0;
-  border-radius: 6px;
+  background-color: #222;
+  color: #aaa;
+  border: 1px solid #333;
+  padding: 7px 0;
+  border-radius: 5px;
   cursor: pointer;
-  transition: all 0.2s;
+  font-size: 12px;
+  transition: all 0.15s;
   
   &:hover {
-    background-color: #444;
+    background-color: #2a2a2a;
+    color: #fff;
+    border-color: #555;
+  }
+`;
+
+const ToggleRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: #1a1a1a;
+  border-radius: 6px;
+  border: 1px solid #2a2a2a;
+`;
+
+const ToggleLabel = styled.span`
+  font-size: 12px;
+  color: #999;
+`;
+
+const ToggleSwitch = styled.button`
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  background: ${(props) => (props.$active ? '#00e5ff' : '#333')};
+  transition: background 0.2s;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: ${(props) => (props.$active ? '18px' : '2px')};
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    transition: left 0.2s;
+  }
+`;
+
+const SizeSelect = styled.select`
+  width: 100%;
+  background: #1a1a1a;
+  color: #ccc;
+  border: 1px solid #2a2a2a;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+
+  &:hover {
+    border-color: #444;
   }
 `;
 
@@ -85,19 +155,19 @@ const UploadLabel = styled.label`
   display: block;
   width: 100%;
   text-align: center;
-  background-color: #2a2a2a;
-  color: #aaa;
-  border: 1px dashed #555;
-  padding: 12px 0;
+  background-color: #1a1a1a;
+  color: #666;
+  border: 1px dashed #333;
+  padding: 10px 0;
   border-radius: 6px;
   cursor: pointer;
-  margin-bottom: 15px;
+  font-size: 12px;
   transition: all 0.2s;
 
   &:hover {
-    background-color: #333;
-    color: #fff;
-    border-color: #777;
+    background-color: #222;
+    color: #aaa;
+    border-color: #555;
   }
 
   input {
@@ -105,8 +175,28 @@ const UploadLabel = styled.label`
   }
 `;
 
+const Divider = styled.div`
+  height: 1px;
+  background: rgba(255, 255, 255, 0.05);
+  margin: 4px 0;
+`;
+
+const BlockList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  overflow-y: auto;
+`;
+
 export default function Sidebar() {
-  const { availableBlocks, selectedBlockType, setSelectedBlockType, startDrag, stopDrag, setBlocks, addCustomBlockType, shadowsEnabled, toggleShadows } = useBlockStore();
+  const { 
+    availableBlocks, selectedBlockType, setSelectedBlockType, 
+    startDrag, stopDrag, setBlocks, addCustomBlockType, 
+    shadowsEnabled, toggleShadows, 
+    showWorldBounds, toggleWorldBounds,
+    worldSize, setWorldSize 
+  } = useBlockStore();
   const [isOpen, setIsOpen] = React.useState(false);
 
   useEffect(() => {
@@ -158,41 +248,70 @@ export default function Sidebar() {
   return (
     <>
       <MobileToggle onClick={() => setIsOpen(!isOpen)}>
-        {isOpen ? '✕ Fechar Menu' : '☰ Abrir Menu'}
+        {isOpen ? '✕ Fechar' : '☰ Menu'}
       </MobileToggle>
 
       <SidebarContainer $isOpen={isOpen}>
-        <Title>BlockForge</Title>
-        
+        <Logo>BlockForge</Logo>
+
+        {/* ---- PROJECT ---- */}
+        <SectionLabel>Projeto</SectionLabel>
         <ButtonRow>
-          <ActionButton onClick={handleSave}>Salvar</ActionButton>
-          <ActionButton onClick={handleLoad}>Carregar</ActionButton>
+          <SmallBtn onClick={handleSave}>💾 Salvar</SmallBtn>
+          <SmallBtn onClick={handleLoad}>📂 Carregar</SmallBtn>
         </ButtonRow>
 
-        <ActionButton onClick={toggleShadows} style={{ marginBottom: 10 }}>
-          {shadowsEnabled ? '☀️ Sombras: ON' : '🌑 Sombras: OFF'}
-        </ActionButton>
+        <Divider />
+
+        {/* ---- SETTINGS ---- */}
+        <SectionLabel>Configurações</SectionLabel>
         
-        <Title style={{ marginTop: 10 }}>Blocos</Title>
+        <ToggleRow>
+          <ToggleLabel>Sombras</ToggleLabel>
+          <ToggleSwitch $active={shadowsEnabled} onClick={toggleShadows} />
+        </ToggleRow>
+
+        <ToggleRow>
+          <ToggleLabel>Bordas do Mundo</ToggleLabel>
+          <ToggleSwitch $active={showWorldBounds} onClick={toggleWorldBounds} />
+        </ToggleRow>
+
+        <SizeSelect 
+          value={worldSize.id}
+          onChange={(e) => setWorldSize(e.target.value)}
+        >
+          {WORLD_SIZES.map((size) => (
+            <option key={size.id} value={size.id}>
+              {size.label} ({size.width}×{size.height}×{size.depth})
+            </option>
+          ))}
+        </SizeSelect>
+
+        <Divider />
+
+        {/* ---- BLOCKS ---- */}
+        <SectionLabel>Blocos</SectionLabel>
 
         <UploadLabel>
           + Upload Imagem
           <input type="file" accept="image/png, image/jpeg" onChange={handleFileUpload} />
         </UploadLabel>
 
-        {availableBlocks.map((block) => (
-        <BlockItem 
-          key={block.id}
-          block={block}
-          isSelected={selectedBlockType === block.id}
-          onSelect={() => setSelectedBlockType(block.id)}
-          onDragStart={() => {
-            setSelectedBlockType(block.id);
-            startDrag(block.id);
-          }}
-        />
-      ))}
-    </SidebarContainer>
+        <BlockList>
+          {availableBlocks.map((block) => (
+            <BlockItem 
+              key={block.id}
+              block={block}
+              isSelected={selectedBlockType === block.id}
+              onSelect={() => setSelectedBlockType(block.id)}
+              onDragStart={() => {
+                setSelectedBlockType(block.id);
+                startDrag(block.id);
+              }}
+            />
+          ))}
+        </BlockList>
+      </SidebarContainer>
     </>
   );
 }

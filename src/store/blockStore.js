@@ -1,14 +1,25 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-import { isInsideWorld } from '../utils/math/isInsideWorld';
 import { FALLBACK_BLOCKS } from '../config/blockTypes';
 import { fetchMinecraftBlocks } from '../services/minecraftService';
 import { adaptMinecraftBlocks } from '../adapters/minecraftAdapter';
+import { WORLD_SIZES } from '../utils/constants/worldSizes';
+
+function isInsideWorldDynamic(position, worldSize) {
+  const [x, y, z] = position;
+  const halfW = worldSize.width / 2;
+  const halfD = worldSize.depth / 2;
+  return (
+    x >= -halfW && x <= halfW &&
+    y >= 0 && y <= worldSize.height &&
+    z >= -halfD && z <= halfD
+  );
+}
 
 export const useBlockStore = create((set, get) => ({
   // History State
   past: [],
-  blocks: [], // Present state: { id, position: [x, y, z], type }
+  blocks: [],
   future: [],
   
   // Selection State
@@ -17,15 +28,15 @@ export const useBlockStore = create((set, get) => ({
   // UI State
   availableBlocks: FALLBACK_BLOCKS,
   selectedBlockType: FALLBACK_BLOCKS[0].id,
-  currentPlan: 'free',
   isDragging: false,
   draggedType: null,
   shadowsEnabled: false,
+  showWorldBounds: true,
+  worldSize: WORLD_SIZES[1], // Default: Medium (16x16x16)
 
   // History Methods
   _pushHistory: (newBlocks) => {
     const { blocks, past } = get();
-    // Keep max 50 history steps
     const newPast = [...past, blocks].slice(-50);
     set({ past: newPast, blocks: newBlocks, future: [], selectedBlocksIDs: [] });
   },
@@ -66,7 +77,8 @@ export const useBlockStore = create((set, get) => ({
   },
 
   addBlock: (position, type) => {
-    if (!isInsideWorld(position, get().currentPlan)) return;
+    const ws = get().worldSize;
+    if (!isInsideWorldDynamic(position, ws)) return;
     
     const { blocks } = get();
     const exists = blocks.find(
@@ -104,4 +116,9 @@ export const useBlockStore = create((set, get) => ({
   startDrag: (type) => set({ isDragging: true, draggedType: type }),
   stopDrag: () => set({ isDragging: false, draggedType: null }),
   toggleShadows: () => set((state) => ({ shadowsEnabled: !state.shadowsEnabled })),
+  toggleWorldBounds: () => set((state) => ({ showWorldBounds: !state.showWorldBounds })),
+  setWorldSize: (sizeId) => {
+    const size = WORLD_SIZES.find(s => s.id === sizeId);
+    if (size) set({ worldSize: size });
+  },
 }));

@@ -2,18 +2,23 @@ import React, { useRef, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useBlockStore } from '../../../store/blockStore';
 import { snapToGrid } from '../../../utils/math/snapToGrid';
-import { isInsideWorld } from '../../../utils/math/isInsideWorld';
 
 export default function GhostBlock() {
-  const { isDragging, draggedType, addBlock, currentPlan } = useBlockStore();
+  const { isDragging, draggedType, addBlock, worldSize } = useBlockStore();
   const meshRef = useRef();
   const currentPosRef = useRef(null);
   const isValidRef = useRef(false);
   
   const { raycaster, camera, pointer, scene } = useThree();
 
+  const isInsideDynamic = (pos) => {
+    const [x, y, z] = pos;
+    const halfW = worldSize.width / 2;
+    const halfD = worldSize.depth / 2;
+    return x >= -halfW && x <= halfW && y >= 0 && y <= worldSize.height && z >= -halfD && z <= halfD;
+  };
+
   useFrame(() => {
-    // Ghost block only appears during sidebar drag
     if (!isDragging || !meshRef.current) {
       if (meshRef.current) meshRef.current.visible = false;
       return;
@@ -40,7 +45,7 @@ export default function GhostBlock() {
       meshRef.current.visible = true;
       currentPosRef.current = snapped;
       
-      const valid = isInsideWorld(snapped, currentPlan);
+      const valid = isInsideDynamic(snapped);
       isValidRef.current = valid;
       meshRef.current.material.color.set(valid ? 'lime' : 'red');
     } else {

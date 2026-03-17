@@ -1,10 +1,16 @@
 import React from 'react';
 import { useBlockStore } from '../../../store/blockStore';
 import { snapToGrid } from '../../../utils/math/snapToGrid';
-import { isInsideWorld } from '../../../utils/math/isInsideWorld';
 
 export default function Ground() {
-  const { isDragging, addBlock, selectedBlockType, currentPlan, clearSelection } = useBlockStore();
+  const { isDragging, addBlock, selectedBlockType, worldSize, clearSelection } = useBlockStore();
+
+  const isInsideDynamic = (pos) => {
+    const [x, y, z] = pos;
+    const halfW = worldSize.width / 2;
+    const halfD = worldSize.depth / 2;
+    return x >= -halfW && x <= halfW && y >= 0 && y <= worldSize.height && z >= -halfD && z <= halfD;
+  };
 
   return (
     <mesh 
@@ -21,7 +27,7 @@ export default function Ground() {
         const p = e.point.clone();
         const pos = [p.x, 0, p.z];
         const snapped = snapToGrid(pos);
-        if (isInsideWorld(snapped, currentPlan)) {
+        if (isInsideDynamic(snapped)) {
           addBlock(snapped, selectedBlockType);
         }
       }}
