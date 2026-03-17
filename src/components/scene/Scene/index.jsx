@@ -1,4 +1,6 @@
 import { Canvas } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
+import * as THREE from 'three';
 import Camera from '../Camera';
 import Lights from '../Lights';
 import Ground from '../Grid/Ground';
@@ -15,11 +17,20 @@ export default function Scene() {
     <Canvas 
       shadows 
       onContextMenu={(e) => e.preventDefault()}
+      camera={{ position: [10, 10, 10], fov: 50 }}
     >
       <color attach="background" args={['#1a1a1a']} />
-      <Camera />
       <Lights />
       
+      <OrbitControls 
+        makeDefault 
+        mouseButtons={{
+          LEFT: THREE.MOUSE.NONE, 
+          MIDDLE: THREE.MOUSE.PAN, 
+          RIGHT: THREE.MOUSE.ROTATE 
+        }}
+      />
+
       <World>
         <Ground />
         <GridHelper />

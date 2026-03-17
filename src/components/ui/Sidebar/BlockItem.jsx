@@ -47,7 +47,6 @@ export default function BlockItem({ block, isSelected, onSelect, onDragStart }) 
       $selected={isSelected}
       onClick={onSelect}
       onPointerDown={(e) => {
-        e.preventDefault();
         if (e.target.hasPointerCapture(e.pointerId)) {
           e.target.releasePointerCapture(e.pointerId);
         }

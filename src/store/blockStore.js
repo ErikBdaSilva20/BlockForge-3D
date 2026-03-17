@@ -9,7 +9,6 @@ export const useBlockStore = create((set) => ({
   draggedType: null,
 
   isBuilding: false,
-  lastBuiltPos: null,
 
   addBlock: (position, type) => {
     if (!isInsideWorld(position)) return;
@@ -37,6 +36,5 @@ export const useBlockStore = create((set) => ({
   stopDrag: () => set({ isDragging: false, draggedType: null }),
 
   startBuilding: () => set({ isBuilding: true }),
-  stopBuilding: () => set({ isBuilding: false, lastBuiltPos: null }),
-  setLastBuiltPos: (pos) => set({ lastBuiltPos: pos }),
+  stopBuilding: () => set({ isBuilding: false }),
 }));

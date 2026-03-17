@@ -5,10 +5,11 @@ import { snapToGrid } from '../../../utils/math/snapToGrid';
 import { isInsideWorld } from '../../../utils/math/isInsideWorld';
 
 export default function GhostBlock() {
-  const { isDragging, isBuilding, draggedType, selectedBlockType, addBlock, lastBuiltPos, setLastBuiltPos, stopBuilding, stopDrag } = useBlockStore();
+  const { isDragging, isBuilding, draggedType, selectedBlockType, addBlock } = useBlockStore();
   const meshRef = useRef();
   const currentPosRef = useRef(null);
   const isValidRef = useRef(false);
+  const localLastBuiltRef = useRef(null);
   
   const { raycaster, camera, pointer, scene } = useThree();
 
@@ -22,10 +23,7 @@ export default function GhostBlock() {
     }
     
     raycaster.setFromCamera(pointer, camera);
-    const worldGroup = scene.getObjectByName('WorldGroup');
-    if (!worldGroup) return;
-
-    const intersects = raycaster.intersectObject(worldGroup, true);
+    const intersects = raycaster.intersectObjects(scene.children, true);
     const hit = intersects.find(i => i.object.userData.isTarget);
     
     if (hit) {
@@ -37,25 +35,23 @@ export default function GhostBlock() {
           hit.object.position.z + hit.face.normal.z,
         ];
       } else {
-        const localPoint = worldGroup.worldToLocal(hit.point.clone());
-        p = [localPoint.x, 0, localPoint.z];
+        p = [hit.point.x, 0, hit.point.z];
       }
       
       const snapped = snapToGrid(p);
       meshRef.current.position.set(...snapped);
-      meshRef.current.visible = isDragging; // only show ghost block if dragging explicitly
+      meshRef.current.visible = isDragging; // Show phantom when dragging from sidebar
       currentPosRef.current = snapped;
       
       const valid = isInsideWorld(snapped);
       isValidRef.current = valid;
       meshRef.current.material.color.set(valid ? 'lime' : 'red');
 
-      // Add block logic for continuous building
       if (isBuilding && valid) {
          const posKey = snapped.join(',');
-         if (posKey !== lastBuiltPos) {
+         if (posKey !== localLastBuiltRef.current) {
              addBlock(snapped, activeType);
-             setLastBuiltPos(posKey);
+             localLastBuiltRef.current = posKey;
          }
       }
     } else {
@@ -73,6 +69,7 @@ export default function GhostBlock() {
       }
       state.stopDrag();
       state.stopBuilding();
+      localLastBuiltRef.current = null;
     };
     
     window.addEventListener('pointerup', handleUp);

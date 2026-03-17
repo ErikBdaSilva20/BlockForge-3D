@@ -11,7 +11,7 @@ const COLORS = {
 };
 
 export default function Block({ id, position, type }) {
-  const { addBlock, removeBlock, selectedBlockType, isDragging, startBuilding, setLastBuiltPos } = useBlockStore();
+  const { addBlock, removeBlock, selectedBlockType, isDragging, startBuilding } = useBlockStore();
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -23,10 +23,13 @@ export default function Block({ id, position, type }) {
       onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }}
       onPointerOut={(e) => { e.stopPropagation(); setHovered(false); }}
       onPointerDown={(e) => {
+        // Allow OrbitControls to handle right and middle clicks
+        if (e.button === 2 || e.button === 1) return;
+        
         e.stopPropagation();
         
-        // Remove block on right click
-        if (e.button === 2) {
+        // Remove block on Shift + Left Click
+        if (e.button === 0 && e.shiftKey) {
            removeBlock(id);
            return;
         }
@@ -42,7 +45,6 @@ export default function Block({ id, position, type }) {
           const snapped = snapToGrid(p);
           if (isInsideWorld(snapped)) {
             addBlock(snapped, selectedBlockType);
-            setLastBuiltPos(snapped.join(','));
           }
         }
       }}
