@@ -3,7 +3,7 @@ import { useBlockStore } from '../../../store/blockStore';
 import { snapToGrid } from '../../../utils/math/snapToGrid';
 
 export default function Ground() {
-  const { isDragging, addBlock, selectedBlockType, worldSize, clearSelection } = useBlockStore();
+  const { isDragging, addBlock, selectedBlockType, worldSize, clearSelection, brushMode } = useBlockStore();
 
   const isInsideDynamic = (pos) => {
     const [x, y, z] = pos;
@@ -18,6 +18,7 @@ export default function Ground() {
       position={[0, -0.01, 0]} 
       userData={{ isTarget: true, isGround: true }}
       onClick={(e) => {
+        if (brushMode) return;
         if (e.button !== 0 || isDragging) return;
         if (e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return;
         e.stopPropagation();

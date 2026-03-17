@@ -4,7 +4,7 @@ import { snapToGrid } from '../../../utils/math/snapToGrid';
 import { getTexture } from '../../../utils/graphics/textureCache';
 
 const Block = memo(({ id, position, type }) => {
-  const { addBlock, removeBlock, selectedBlockType, isDragging, availableBlocks, worldSize, selectedBlocksIDs, selectBlock, shadowsEnabled } = useBlockStore();
+  const { addBlock, removeBlock, selectedBlockType, isDragging, availableBlocks, worldSize, selectedBlocksIDs, selectBlock, shadowsEnabled, brushMode } = useBlockStore();
   const [hovered, setHovered] = useState(false);
   const [map, setMap] = useState(null);
 
@@ -34,9 +34,10 @@ const Block = memo(({ id, position, type }) => {
       castShadow={shadowsEnabled}
       receiveShadow={shadowsEnabled}
       userData={{ isTarget: true, isBlock: true, id, type }}
-      onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }}
-      onPointerOut={(e) => { e.stopPropagation(); setHovered(false); }}
+      onPointerOver={(e) => { if (brushMode) return; e.stopPropagation(); setHovered(true); }}
+      onPointerOut={(e) => { if (brushMode) return; e.stopPropagation(); setHovered(false); }}
       onClick={(e) => {
+        if (brushMode) return;
         if (e.button !== 0) return;
         e.stopPropagation();
         
