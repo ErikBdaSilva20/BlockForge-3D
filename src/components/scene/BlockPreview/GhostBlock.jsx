@@ -10,6 +10,7 @@ export default function GhostBlock() {
   const currentPosRef = useRef(null);
   const isValidRef = useRef(false);
   const localLastBuiltRef = useRef(null);
+  const frameSkipRef = useRef(0);
   
   const { raycaster, camera, pointer, scene } = useThree();
 
@@ -20,6 +21,12 @@ export default function GhostBlock() {
     if (!isHandlingPreview || !meshRef.current) {
       if (meshRef.current) meshRef.current.visible = false;
       return;
+    }
+
+    // Throttle: only process every 3rd frame during continuous build
+    if (isBuilding) {
+      frameSkipRef.current++;
+      if (frameSkipRef.current % 3 !== 0) return;
     }
     
     raycaster.setFromCamera(pointer, camera);
@@ -40,7 +47,7 @@ export default function GhostBlock() {
       
       const snapped = snapToGrid(p);
       meshRef.current.position.set(...snapped);
-      meshRef.current.visible = isDragging; // Show phantom when dragging from sidebar
+      meshRef.current.visible = isDragging;
       currentPosRef.current = snapped;
       
       const valid = isInsideWorld(snapped, currentPlan);
@@ -70,6 +77,7 @@ export default function GhostBlock() {
       state.stopDrag();
       state.stopBuilding();
       localLastBuiltRef.current = null;
+      frameSkipRef.current = 0;
     };
     
     window.addEventListener('pointerup', handleUp);

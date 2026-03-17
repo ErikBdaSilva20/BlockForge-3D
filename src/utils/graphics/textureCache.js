@@ -2,6 +2,7 @@ import * as THREE from 'three';
 
 const textureCache = {};
 const loader = new THREE.TextureLoader();
+loader.crossOrigin = 'anonymous';
 
 export function getTexture(url, callback) {
   if (textureCache[url]) {
@@ -15,6 +16,8 @@ export function getTexture(url, callback) {
       texture.magFilter = THREE.NearestFilter;
       texture.minFilter = THREE.NearestFilter;
       texture.colorSpace = THREE.SRGBColorSpace;
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
       
       textureCache[url] = texture;
       callback(texture);

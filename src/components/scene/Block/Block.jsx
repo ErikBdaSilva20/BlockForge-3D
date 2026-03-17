@@ -5,7 +5,7 @@ import { isInsideWorld } from '../../../utils/math/isInsideWorld';
 import { getTexture } from '../../../utils/graphics/textureCache';
 
 const Block = memo(({ id, position, type }) => {
-  const { addBlock, removeBlock, selectedBlockType, isDragging, startBuilding, availableBlocks, currentPlan, selectedBlocksIDs, selectBlock } = useBlockStore();
+  const { addBlock, removeBlock, selectedBlockType, isDragging, startBuilding, availableBlocks, currentPlan, selectedBlocksIDs, selectBlock, shadowsEnabled } = useBlockStore();
   const [hovered, setHovered] = useState(false);
   const [map, setMap] = useState(null);
 
@@ -25,31 +25,30 @@ const Block = memo(({ id, position, type }) => {
   return (
     <mesh 
       position={position} 
-      castShadow 
-      receiveShadow 
+      castShadow={shadowsEnabled}
+      receiveShadow={shadowsEnabled}
       userData={{ isTarget: true, isBlock: true, id, type }}
       onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }}
       onPointerOut={(e) => { e.stopPropagation(); setHovered(false); }}
-      onPointerDown={(e) => {
+      onClick={(e) => {
         if (e.button === 2 || e.button === 1) return;
         e.stopPropagation();
         
-        // Remove block on Shift + Left Click
+        // Remove block on Shift + Alt + Click
         if (e.button === 0 && e.shiftKey && e.altKey) {
            removeBlock(id);
            return;
         }
         
-        // Select Block on Ctrl/Cmd + Left Click (or shift without alt)
+        // Select Block on Ctrl/Cmd + Click (or shift without alt)
         if (e.button === 0 && (e.ctrlKey || e.metaKey || e.shiftKey)) {
           selectBlock(id, true);
           return;
         }
 
-        // Add block on left click
+        // Add block on left click (single click only)
         if (e.button === 0 && !e.altKey && !isDragging) {
-          selectBlock(id, false); // Single select
-          startBuilding();
+          selectBlock(id, false);
           const p = [
             position[0] + e.face.normal.x,
             position[1] + e.face.normal.y,
@@ -60,6 +59,12 @@ const Block = memo(({ id, position, type }) => {
             addBlock(snapped, selectedBlockType);
           }
         }
+      }}
+      onPointerDown={(e) => {
+        if (e.button !== 0 || e.altKey || isDragging) return;
+        if (e.shiftKey || e.ctrlKey || e.metaKey) return;
+        e.stopPropagation();
+        startBuilding();
       }}
     >
       <boxGeometry args={[1, 1, 1]} />

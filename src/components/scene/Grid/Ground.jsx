@@ -10,15 +10,13 @@ export default function Ground() {
     <mesh 
       rotation={[-Math.PI / 2, 0, 0]} 
       position={[0, -0.01, 0]} 
-      receiveShadow
       userData={{ isTarget: true, isGround: true }}
-      onPointerDown={(e) => {
+      onClick={(e) => {
         if (e.button !== 0 || e.altKey || isDragging) return;
         if (e.shiftKey || e.ctrlKey || e.metaKey) return;
         e.stopPropagation();
         
         clearSelection();
-        startBuilding();
 
         const p = e.point.clone();
         const pos = [p.x, 0, p.z];
@@ -27,9 +25,15 @@ export default function Ground() {
           addBlock(snapped, selectedBlockType);
         }
       }}
+      onPointerDown={(e) => {
+        if (e.button !== 0 || e.altKey || isDragging) return;
+        if (e.shiftKey || e.ctrlKey || e.metaKey) return;
+        e.stopPropagation();
+        startBuilding();
+      }}
     >
       <planeGeometry args={[100, 100]} />
-      <meshStandardMaterial color="#2a2a2a" />
+      <meshStandardMaterial color="#111111" />
     </mesh>
   );
 }

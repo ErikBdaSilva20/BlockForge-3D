@@ -106,7 +106,7 @@ const UploadLabel = styled.label`
 `;
 
 export default function Sidebar() {
-  const { availableBlocks, selectedBlockType, setSelectedBlockType, startDrag, stopDrag, setBlocks, addCustomBlockType } = useBlockStore();
+  const { availableBlocks, selectedBlockType, setSelectedBlockType, startDrag, stopDrag, setBlocks, addCustomBlockType, shadowsEnabled, toggleShadows } = useBlockStore();
   const [isOpen, setIsOpen] = React.useState(false);
 
   useEffect(() => {
@@ -168,6 +168,10 @@ export default function Sidebar() {
           <ActionButton onClick={handleSave}>Salvar</ActionButton>
           <ActionButton onClick={handleLoad}>Carregar</ActionButton>
         </ButtonRow>
+
+        <ActionButton onClick={toggleShadows} style={{ marginBottom: 10 }}>
+          {shadowsEnabled ? '☀️ Sombras: ON' : '🌑 Sombras: OFF'}
+        </ActionButton>
         
         <Title style={{ marginTop: 10 }}>Blocos</Title>
 

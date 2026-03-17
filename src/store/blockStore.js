@@ -21,6 +21,7 @@ export const useBlockStore = create((set, get) => ({
   isDragging: false,
   draggedType: null,
   isBuilding: false,
+  shadowsEnabled: false,
 
   // History Methods
   _pushHistory: (newBlocks) => {
@@ -105,4 +106,5 @@ export const useBlockStore = create((set, get) => ({
   stopDrag: () => set({ isDragging: false, draggedType: null }),
   startBuilding: () => set({ isBuilding: true }),
   stopBuilding: () => set({ isBuilding: false }),
+  toggleShadows: () => set((state) => ({ shadowsEnabled: !state.shadowsEnabled })),
 }));
