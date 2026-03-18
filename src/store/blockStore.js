@@ -214,28 +214,28 @@ export const useBlockStore = create((set, get) => ({
     const { blocks, brushType, brushLayer, brushDirection, brushMarks, brushOrientation } = get();
     
     let linePositions = [];
-    
-    if (brushType === 'add') {
-       const [x, startY, z] = position;
-       
-       if (brushOrientation === 'vertical') {
-         // Modo VERTICAL: constrói uma coluna do chão (1) até o brushLayer nessa posição X/Z
-         const minY = 1;
-         const maxY = brushLayer;
-         for (let y = minY; y <= maxY; y++) {
-           if (y > ws.height || y < 1) continue;
-           linePositions.push([x, y, z]);
-         }
-       } else {
-         // Modo HORIZONTAL: pintura plana na camada (brushLayer)
-         // Coloca bloco na camada definida pelo brushLayer
-         if (brushLayer >= 1 && brushLayer <= ws.height) {
-           linePositions.push([x, brushLayer, z]);
-         }
-       }
+    const [x, startY, z] = position;
+
+    if (brushOrientation === 'vertical') {
+      // Modo VERTICAL: constrói ou remove uma coluna do chão (1) até o brushLayer nessa posição X/Z
+      const minY = 1;
+      const maxY = brushLayer;
+      for (let y = minY; y <= maxY; y++) {
+        if (y > ws.height || y < 1) continue;
+        linePositions.push([x, y, z]);
+      }
     } else {
-       // Se for remove, marca a posição atingida pelo raycast
-       linePositions.push(position);
+      // Modo HORIZONTAL
+      if (brushType === 'add') {
+        // Coloca bloco na camada definida pelo brushLayer
+        if (brushLayer >= 1 && brushLayer <= ws.height) {
+          linePositions.push([x, brushLayer, z]);
+        }
+      } else {
+        // Se for remove, marca a posição atingida pelo raycast
+        // Em brush de pintura mista, remove foca apenas no bloco da camada do brushLayer
+        linePositions.push([x, brushLayer, z]);
+      }
     }
 
     set((state) => {

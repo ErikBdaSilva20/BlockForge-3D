@@ -341,6 +341,37 @@ export default function Sidebar() {
   const [isOpen, setIsOpen] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isBlocksOpen, setIsBlocksOpen] = React.useState(false);
+  const drawerRef = React.useRef(null);
+  const sidebarRef = React.useRef(null);
+
+  React.useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        isBlocksOpen &&
+        drawerRef.current &&
+        !drawerRef.current.contains(event.target) &&
+        !event.target.closest('#catalog-btn')
+      ) {
+        setIsBlocksOpen(false);
+      }
+
+      if (
+        isOpen &&
+        window.innerWidth <= 768 &&
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target) &&
+        !event.target.closest('#mobile-toggle-btn')
+      ) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isBlocksOpen, isOpen]);
 
   useEffect(() => {
     const handleUp = () => stopDrag();
@@ -428,28 +459,32 @@ export default function Sidebar() {
 
   return (
     <>
-      <MobileToggle onClick={() => setIsOpen(!isOpen)}>
+      <MobileToggle id="mobile-toggle-btn" onClick={() => setIsOpen(!isOpen)}>
         {isOpen ? '✕ Fechar' : '☰ Menu'}
       </MobileToggle>
 
-      <SidebarContainer $isOpen={isOpen}>
+      <SidebarContainer ref={sidebarRef} $isOpen={isOpen}>
         <Logo>BlockForge</Logo>
 
-        <SmallBtn
-          style={{
-            backgroundColor: 'transparent',
-            color: '#00e5ff',
-            padding: '4px 0',
-            fontSize: '11px',
-            fontWeight: '600',
-            border: '1px solid #00e5ff44',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
-          onClick={() => setIsBlocksOpen(!isBlocksOpen)}
-        >
-          {isBlocksOpen ? '✕ Fechar Catálogo' : '📦 Catálogo'}
-        </SmallBtn>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
+          <SmallBtn
+            id="catalog-btn"
+            style={{
+              backgroundColor: 'rgba(0, 229, 255, 0.1)',
+              color: '#00e5ff',
+              padding: '6px 14px',
+              fontSize: '12px',
+              fontWeight: '600',
+              border: '1px solid #00e5ff66',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              width: 'max-content',
+            }}
+            onClick={() => setIsBlocksOpen(!isBlocksOpen)}
+          >
+            {isBlocksOpen ? '✕ Fechar Catálogo' : '📦 Catálogo'}
+          </SmallBtn>
+        </div>
 
         {/* ---- PROJECT ---- */}
         <SectionLabel>Projeto</SectionLabel>
@@ -595,7 +630,7 @@ export default function Sidebar() {
         </UploadLabel>
       </SidebarContainer>
 
-      <BlocksDrawer $isOpen={isBlocksOpen}>
+      <BlocksDrawer ref={drawerRef} $isOpen={isBlocksOpen}>
         <BlocksDrawerHeader>
           <BlocksDrawerTitle>Catálogo de Blocos ({availableBlocks.length})</BlocksDrawerTitle>
           <SmallBtn

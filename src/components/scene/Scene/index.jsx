@@ -62,10 +62,16 @@ function SceneContent() {
         ref={controlsRef}
         makeDefault 
         mouseButtons={{
-          LEFT: brushMode ? THREE.MOUSE.NONE : THREE.MOUSE.NONE, 
+          LEFT: THREE.MOUSE.NONE, 
           MIDDLE: THREE.MOUSE.PAN, 
           RIGHT: THREE.MOUSE.ROTATE 
         }}
+        touches={{
+          ONE: brushMode ? THREE.TOUCH.NONE : THREE.TOUCH.ROTATE,
+          TWO: brushMode ? THREE.TOUCH.NONE : THREE.TOUCH.DOLLY_PAN
+        }}
+        enableRotate={!brushMode}
+        enablePan={!brushMode}
         minDistance={5}
         maxDistance={45}
         maxPolarAngle={Math.PI / 2 - 0.05}
