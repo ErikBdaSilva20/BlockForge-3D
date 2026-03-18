@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import Scene from '../components/scene/Scene';
 import Sidebar from '../components/ui/Sidebar/Sidebar';
 import ShortcutsPanel from '../components/ui/ShortcutsPanel/ShortcutsPanel';
+import BrushFAB from '../components/ui/BrushFAB/BrushFAB';
 import { useBlockStore } from '../store/blockStore';
 
 export default function Editor() {
@@ -49,6 +50,7 @@ export default function Editor() {
       <div style={{ flex: 1, position: 'relative' }}>
         <Scene />
         <ShortcutsPanel />
+        <BrushFAB />
       </div>
     </div>
   );
