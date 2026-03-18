@@ -28,6 +28,15 @@ export const useBlockStore = create((set, get) => ({
   selectionStartPos: null,
   selectionCurrentPos: null,
 
+  // UI State
+  availableBlocks: FALLBACK_BLOCKS,
+  selectedBlockType: FALLBACK_BLOCKS[0].id,
+  isDragging: false,
+  draggedType: null,
+  shadowsEnabled: false,
+  showWorldBounds: true,
+  worldSize: WORLD_SIZES[1],
+
   // Brush Mode
   brushMode: false,
   brushLayer: 0,
