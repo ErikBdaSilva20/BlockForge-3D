@@ -47,6 +47,11 @@ const Panel = styled.div`
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 
+  @media (min-width: 1000px) {
+    max-width: 600px;
+    padding: 30px 40px;
+  }
+
   &::-webkit-scrollbar { width: 4px; }
   &::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
 `;
@@ -122,9 +127,10 @@ export default function ShortcutsPanel() {
           <Panel onClick={(e) => e.stopPropagation()}>
             <PanelTitle>Atalhos & Comandos</PanelTitle>
 
-            {SHORTCUT_CATEGORIES.map((cat) => (
-              <div key={cat}>
-                <CategoryTitle>{cat}</CategoryTitle>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+              {SHORTCUT_CATEGORIES.map((cat) => (
+                <div key={cat}>
+                  <CategoryTitle>{cat}</CategoryTitle>
                 {SHORTCUTS.filter(s => s.category === cat).map((s, i) => (
                   <Row key={i}>
                     <KeyBadge>{s.keys}</KeyBadge>
@@ -134,7 +140,8 @@ export default function ShortcutsPanel() {
               </div>
             ))}
 
-            <CloseBtn onClick={() => setOpen(false)}>Fechar</CloseBtn>
+              <CloseBtn onClick={() => setOpen(false)}>Fechar</CloseBtn>
+            </div>
           </Panel>
         </Overlay>
       )}

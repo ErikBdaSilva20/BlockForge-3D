@@ -26,6 +26,13 @@ export default function Editor() {
       if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
         useBlockStore.getState().redo();
       }
+      // Delete selected blocks
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        const state = useBlockStore.getState();
+        if (state.selectedBlocksIDs.length > 0) {
+          state.deleteSelectedBlocks();
+        }
+      }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     window.addEventListener('keydown', handleKeyDown);

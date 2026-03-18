@@ -8,6 +8,7 @@ import WorldBoundsBox from '../Grid/WorldBoundsBox';
 import Block from '../Block/Block';
 import GhostBlock from '../BlockPreview/GhostBlock';
 import BrushOverlay from '../BrushOverlay/BrushOverlay';
+import SelectionManager from '../BlockPreview/SelectionManager';
 import World from '../World/World';
 import { useBlockStore } from '../../../store/blockStore';
 import React, { useRef, useEffect, useCallback } from 'react';
@@ -83,6 +84,7 @@ function SceneContent() {
         <GhostBlock />
         <BrushOverlay />
       </World>
+      <SelectionManager />
     </>
   );
 }

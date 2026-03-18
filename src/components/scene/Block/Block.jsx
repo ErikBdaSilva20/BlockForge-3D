@@ -36,11 +36,24 @@ const Block = memo(({ id, position, type }) => {
       userData={{ isTarget: true, isBlock: true, id, type }}
       onPointerOver={(e) => { if (brushMode) return; e.stopPropagation(); setHovered(true); }}
       onPointerOut={(e) => { if (brushMode) return; e.stopPropagation(); setHovered(false); }}
+      onPointerDown={(e) => {
+        if (brushMode) return;
+        if (e.button !== 0 || isDragging) return;
+        
+        if (e.shiftKey) {
+          useBlockStore.getState().startAreaSelection(position);
+          return;
+        }
+      }}
       onClick={(e) => {
         if (brushMode) return;
         if (e.button !== 0) return;
         e.stopPropagation();
         
+        if (useBlockStore.getState().isSelectingArea) {
+           return; 
+        }
+
         if (e.shiftKey && e.altKey) {
            removeBlock(id);
            return;

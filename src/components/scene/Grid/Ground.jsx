@@ -16,10 +16,22 @@ export default function Ground() {
     <mesh 
       rotation={[-Math.PI / 2, 0, 0]} 
       position={[0, -0.01, 0]} 
-      userData={{ isTarget: true, isGround: true }}
+      onPointerDown={(e) => {
+        if (brushMode) return;
+        if (e.button !== 0 || isDragging) return;
+        if (e.shiftKey) {
+          const p = e.point.clone();
+          const pos = snapToGrid([p.x, 0, p.z]);
+          if (isInsideDynamic(pos)) {
+            useBlockStore.getState().startAreaSelection(pos);
+          }
+          return;
+        }
+      }}
       onClick={(e) => {
         if (brushMode) return;
         if (e.button !== 0 || isDragging) return;
+        if (useBlockStore.getState().isSelectingArea) return;
         if (e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return;
         e.stopPropagation();
         

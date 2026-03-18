@@ -222,7 +222,7 @@ export default function Sidebar() {
     worldSize, setWorldSize, clearAllBlocks, getOutOfBoundsCount,
     blocks,
     brushMode, toggleBrushMode, brushLayer, setBrushLayer, brushMarks,
-    confirmBrushMarks, clearBrushMarks
+    confirmBrushMarks, clearBrushMarks, brushType, setBrushType
   } = useBlockStore();
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -353,23 +353,46 @@ export default function Sidebar() {
 
         {brushMode && (
           <>
+            <ButtonRow>
+               <SmallBtn 
+                onClick={() => setBrushType('add')} 
+                style={{ 
+                  backgroundColor: brushType === 'add' ? '#2a4433' : '#222',
+                  borderColor: brushType === 'add' ? '#4cff88' : '#333',
+                  color: brushType === 'add' ? '#4cff88' : '#aaa'
+                }}
+              >
+                Colocar
+              </SmallBtn>
+              <SmallBtn 
+                onClick={() => setBrushType('remove')}
+                style={{ 
+                  backgroundColor: brushType === 'remove' ? '#442a2a' : '#222',
+                  borderColor: brushType === 'remove' ? '#ff6b6b' : '#333',
+                  color: brushType === 'remove' ? '#ff6b6b' : '#aaa'
+                }}
+              >
+                Remover
+              </SmallBtn>
+            </ButtonRow>
+
             <LayerIndicator>
               <LayerBtn onClick={() => setBrushLayer(brushLayer - 1)}>−</LayerBtn>
-              <span>Camada: {brushLayer}</span>
+              <span>{brushType === 'add' ? `Parede: ${brushLayer} alt` : `Camada: ${brushLayer}`}</span>
               <LayerBtn onClick={() => setBrushLayer(brushLayer + 1)}>+</LayerBtn>
             </LayerIndicator>
 
             <ButtonRow>
-              <SmallBtn onClick={confirmBrushMarks} style={{ color: '#4cff88', borderColor: '#4cff8844' }}>
-                ✓ Confirmar ({brushMarks.length})
+              <SmallBtn onClick={confirmBrushMarks} style={{ color: '#00e5ff', borderColor: '#00e5ff44' }}>
+                ✓ Executar ({brushMarks.length})
               </SmallBtn>
-              <SmallBtn onClick={clearBrushMarks} style={{ color: '#ff6b6b' }}>
+              <SmallBtn onClick={clearBrushMarks} style={{ color: '#aaa' }}>
                 ✕ Limpar
               </SmallBtn>
             </ButtonRow>
 
             <HelpText>
-              Segure o mouse e arraste para marcar. Use scroll para mudar camada. Clique em Confirmar para construir.
+              Segure o mouse para marcar. Scroll muda {brushType === 'add' ? 'a altura da parede' : 'a camada'}. Clique em Executar.
             </HelpText>
           </>
         )}

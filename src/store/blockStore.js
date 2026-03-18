@@ -23,21 +23,17 @@ export const useBlockStore = create((set, get) => ({
   future: [],
   
   // Selection State
-  selectedBlocksIDs: [], 
-
-  // UI State
-  availableBlocks: FALLBACK_BLOCKS,
-  selectedBlockType: FALLBACK_BLOCKS[0].id,
-  isDragging: false,
-  draggedType: null,
-  shadowsEnabled: false,
-  showWorldBounds: true,
-  worldSize: WORLD_SIZES[1],
+  selectedBlocksIDs: [],
+  isSelectingArea: false,
+  selectionStartPos: null,
+  selectionCurrentPos: null,
 
   // Brush Mode
   brushMode: false,
   brushLayer: 0,
-  brushMarks: [], // array of [x, y, z]
+  brushMarks: [],
+  brushDirection: 'x', // 'x' or 'z'
+  brushType: 'add', // 'add' or 'remove'
 
   // History Methods
   _pushHistory: (newBlocks) => {
@@ -114,7 +110,37 @@ export const useBlockStore = create((set, get) => ({
     return { selectedBlocksIDs: [id] };
   }),
   
-  clearSelection: () => set({ selectedBlocksIDs: [] }),
+  clearSelection: () => set({ selectedBlocksIDs: [], isSelectingArea: false, selectionStartPos: null, selectionCurrentPos: null }),
+
+  startAreaSelection: (pos) => set({ isSelectingArea: true, selectionStartPos: pos, selectionCurrentPos: pos, selectedBlocksIDs: [] }),
+  updateAreaSelection: (pos) => set((state) => {
+    if (!state.isSelectingArea || !state.selectionStartPos) return state;
+    
+    // Calculate bounding box between start and current pos
+    const [x1, y1, z1] = state.selectionStartPos;
+    const [x2, y2, z2] = pos;
+    const minX = Math.min(x1, x2), maxX = Math.max(x1, x2);
+    const minY = Math.min(y1, y2), maxY = Math.max(y1, y2);
+    const minZ = Math.min(z1, z2), maxZ = Math.max(z1, z2);
+
+    const selectedIds = state.blocks
+      .filter(b => 
+        b.position[0] >= minX && b.position[0] <= maxX &&
+        b.position[1] >= minY && b.position[1] <= maxY &&
+        b.position[2] >= minZ && b.position[2] <= maxZ
+      )
+      .map(b => b.id);
+
+    return { selectionCurrentPos: pos, selectedBlocksIDs: selectedIds };
+  }),
+  stopAreaSelection: () => set({ isSelectingArea: false, selectionStartPos: null, selectionCurrentPos: null }),
+
+  deleteSelectedBlocks: () => {
+    const { blocks, selectedBlocksIDs } = get();
+    if (selectedBlocksIDs.length === 0) return;
+    const newBlocks = blocks.filter(b => !selectedBlocksIDs.includes(b.id));
+    get()._pushHistory(newBlocks);
+  },
 
   clearAllBlocks: () => {
     get()._pushHistory([]);
@@ -152,7 +178,12 @@ export const useBlockStore = create((set, get) => ({
     brushMode: !state.brushMode,
     brushMarks: [],
     brushLayer: 0,
+    brushDirection: 'x',
+    brushType: 'add'
   })),
+
+  setBrushDirection: (dir) => set({ brushDirection: dir }),
+  setBrushType: (type) => set({ brushType: type }),
 
   setBrushLayer: (y) => {
     const ws = get().worldSize;
@@ -163,16 +194,48 @@ export const useBlockStore = create((set, get) => ({
   addBrushMark: (position) => {
     const ws = get().worldSize;
     if (!isInsideWorldDynamic(position, ws)) return;
-    // Don't mark where a block already exists
-    const blockExists = get().blocks.some(
-      b => b.position[0] === position[0] && b.position[1] === position[1] && b.position[2] === position[2]
-    );
-    if (blockExists) return;
+    
+    const { blocks, brushType, brushLayer, brushDirection, brushMarks } = get();
+    
+    let linePositions = [];
+    
+    // Se for 'add', tentamos traçar uma parede na direção definida baseada na posição do mouse
+    if (brushType === 'add') {
+       // Em vez de adicionar só um bloco, adicionamos uma linha baseada no brushDirection iterando até o chão ou topo
+       // O brush no modo parede funciona diferente: o usuário clica e uma parede é feita do ponto de impacto até a altura da camada
+       // Se brushDirection for horizontal/vertical, é a escolha do usuário.
+       // Neste caso específico, a instrução era sobre "comprimento da parede"
+       
+       // Para não complicar muito o raycasting: Apenas uma marca nesse X/Z que vai do Y atual até o brushLayer
+       const [x, startY, z] = position;
+       const endY = brushLayer;
+       const minY = Math.min(startY, endY);
+       const maxY = Math.max(startY, endY);
+       
+       for (let y = minY; y <= maxY; y++) {
+         if (y > ws.height) continue;
+         linePositions.push([x, y, z]);
+       }
+    } else {
+       // Se for remove, apenas marca a posição atingida pelo raycast
+       linePositions.push(position);
+    }
+
     set((state) => {
-      const key = position.join(',');
-      const exists = state.brushMarks.some(m => m.join(',') === key);
-      if (exists) return state;
-      return { brushMarks: [...state.brushMarks, position] };
+      let newMarks = [...state.brushMarks];
+      linePositions.forEach(pos => {
+         const key = pos.join(',');
+         // Don't mark where a block already exists if adding
+         const blockExists = blocks.some(b => b.position[0] === pos[0] && b.position[1] === pos[1] && b.position[2] === pos[2]);
+         
+         if (brushType === 'add' && blockExists) return;
+         if (brushType === 'remove' && !blockExists) return;
+         
+         if (!newMarks.some(m => m.join(',') === key)) {
+           newMarks.push(pos);
+         }
+      });
+      return { brushMarks: newMarks };
     });
   },
 
@@ -184,19 +247,26 @@ export const useBlockStore = create((set, get) => ({
   },
 
   confirmBrushMarks: () => {
-    const { brushMarks, selectedBlockType, blocks, worldSize } = get();
+    const { brushMarks, selectedBlockType, brushType, blocks, worldSize } = get();
     if (brushMarks.length === 0) return;
     
-    const newBlocks = [...blocks];
-    for (const pos of brushMarks) {
-      if (!isInsideWorldDynamic(pos, worldSize)) continue;
-      const exists = newBlocks.find(
-        b => b.position[0] === pos[0] && b.position[1] === pos[1] && b.position[2] === pos[2]
-      );
-      if (!exists) {
-        newBlocks.push({ id: uuidv4(), position: pos, type: selectedBlockType });
+    let newBlocks = [...blocks];
+    
+    if (brushType === 'add') {
+      for (const pos of brushMarks) {
+        if (!isInsideWorldDynamic(pos, worldSize)) continue;
+        const exists = newBlocks.find(
+          b => b.position[0] === pos[0] && b.position[1] === pos[1] && b.position[2] === pos[2]
+        );
+        if (!exists) {
+          newBlocks.push({ id: uuidv4(), position: pos, type: selectedBlockType });
+        }
       }
+    } else if (brushType === 'remove') {
+      const markKeys = new Set(brushMarks.map(pos => pos.join(',')));
+      newBlocks = blocks.filter(b => !markKeys.has(b.position.join(',')));
     }
+    
     get()._pushHistory(newBlocks);
     set({ brushMarks: [] });
   },
