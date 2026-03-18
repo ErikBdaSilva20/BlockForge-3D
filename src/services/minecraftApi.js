@@ -89,21 +89,37 @@ const TEXTURE_NAME_MAP = {
 const NON_CUBE_SUFFIXES = [
   '_slab', '_stairs', '_wall', '_fence', '_sign', '_door',
   '_trapdoor', '_pressure_plate', '_button', '_fence_gate',
-  '_banner', '_bed', '_head', '_skull', '_candle',
+  '_banner', '_bed', '_head', '_skull', '_candle', '_torch',
+  '_plant', '_sapling', '_flower', '_bush', '_crop', '_shrub',
+  '_rail', '_lantern', '_rod', '_pot', '_hanging_sign',
+  '_fan', '_coral', '_cluster', '_bud', '_point', '_roots',
+  '_sprouts', '_tulip', '_orchid', '_allium', '_cornflower',
+  '_blossom', '_hyacinth', '_daisy', '_poppy', '_lily',
 ];
 
-// Blocos técnicos/invisíveis para excluir
+// Blocos técnicos/invisíveis ou que não são cubos sólidos para excluir
 const EXCLUDED_NAMES = [
   'air', 'cave_air', 'void_air', 'structure_void', 'barrier',
   'light', 'moving_piston', 'piston_head', 'command_block',
   'chain_command_block', 'repeating_command_block', 'structure_block',
   'jigsaw', 'frosted_ice', 'spawner', 'trial_spawner',
-  'petrified_oak_slab', 'budding_amethyst',
+  'petrified_oak_slab', 'budding_amethyst', 'conduit', 'beacon',
+  'end_portal_frame', 'end_gateway', 'dragon_egg', 'bell', 'cauldron',
+  'torch', 'lantern', 'ladder', 'vine', 'glow_lichen', 'sculck_vein',
+  'redstone_wire', 'redstone_torch', 'repeater', 'comparator',
+  'lever', 'tripwire', 'scaffolding', 'lily_pad', 'turtle_egg',
+  'frogspawn', 'composter', 'cake', 'brewing_stand', 'cake',
+  'campfire', 'soul_campfire', 'bamboo_sapling', 'sweet_berry_bush',
+  'cave_vines', 'big_dripleaf', 'small_dripleaf', 'glow_berries',
+  'spore_blossom', 'azalea', 'flowering_azalea', 'kelp', 'seagrass',
+  'tall_grass', 'large_fern', 'rose_bush', 'peony', 'lilac',
+  'sunflower', 'chorus_flower', 'chorus_plant', 'sea_pickle',
+  'cactus', 'sugar_cane', 'bamboo', 'bamboo_plant',
 ];
 
 // Prefixos de blocos que são variantes técnicas (colocados em paredes, etc)
 const EXCLUDED_PREFIXES = [
-  'wall_', 'potted_', 'attached_',
+  'wall_', 'potted_', 'attached_', 'brain_', 'bubble_', 'fire_', 'soul_fire_',
 ];
 
 export async function fetchMinecraftBlocks() {

@@ -326,6 +326,10 @@ export default function Sidebar() {
     clearAllBlocks,
     getOutOfBoundsCount,
     blocks,
+    past,
+    future,
+    undo,
+    redo,
     brushMode,
     toggleBrushMode,
     brushLayer,
@@ -508,6 +512,29 @@ export default function Sidebar() {
               onChange={handleUploadFile}
               style={{ display: 'none' }}
             />
+          </SmallBtn>
+        </ButtonRow>
+
+        <ButtonRow>
+          <SmallBtn 
+            onClick={undo} 
+            $disabled={past.length === 0} 
+            style={{ 
+              opacity: past.length === 0 ? 0.4 : 1,
+              pointerEvents: past.length === 0 ? 'none' : 'auto'
+            }}
+          >
+            ↩️ Desfazer
+          </SmallBtn>
+          <SmallBtn 
+            onClick={redo} 
+            $disabled={future.length === 0} 
+            style={{ 
+              opacity: future.length === 0 ? 0.4 : 1,
+              pointerEvents: future.length === 0 ? 'none' : 'auto'
+            }}
+          >
+            ↪️ Refazer
           </SmallBtn>
         </ButtonRow>
 
