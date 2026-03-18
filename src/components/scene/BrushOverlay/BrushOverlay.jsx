@@ -16,13 +16,13 @@ export default function BrushOverlay() {
     raycaster.setFromCamera(pointer, camera);
     
     // Raycast against the invisible layer plane
-    const planeY = brushLayer + 0.5;
+    const planeY = brushLayer;
     const origin = raycaster.ray.origin;
     const direction = raycaster.ray.direction;
     
-    // Simple plane intersection at Y = brushLayer
+    // Simple plane intersection at Y = planeY
     if (direction.y === 0) return;
-    const t = (brushLayer - origin.y) / direction.y;
+    const t = (planeY - origin.y) / direction.y;
     if (t < 0) return;
     
     const hitX = origin.x + direction.x * t;
@@ -74,7 +74,7 @@ export default function BrushOverlay() {
 
       {/* Render brush marks as ghost blocks */}
       {brushMarks.map((pos, i) => (
-        <mesh key={`mark-${i}`} position={[pos[0], pos[1] + 0.5, pos[2]]}>
+        <mesh key={`mark-${i}`} position={[pos[0], pos[1], pos[2]]}>
           <boxGeometry args={[0.96, 0.96, 0.96]} />
           <meshBasicMaterial color="#00e5ff" transparent opacity={0.3} depthWrite={false} />
         </mesh>
