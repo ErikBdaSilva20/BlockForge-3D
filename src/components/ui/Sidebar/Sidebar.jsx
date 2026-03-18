@@ -1,9 +1,14 @@
 import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import { useBlockStore } from '../../../store/blockStore';
-import BlockItem from './BlockItem';
-import { saveProject, loadProject } from '../../../utils/storage/projectStorage';
 import { WORLD_SIZES } from '../../../utils/constants/worldSizes';
+import {
+  downloadProjectFile,
+  loadProject,
+  loadProjectFile,
+  saveProject,
+} from '../../../utils/storage/projectStorage';
+import BlockItem from './BlockItem';
 
 const SidebarContainer = styled.div`
   width: 260px;
@@ -17,7 +22,7 @@ const SidebarContainer = styled.div`
   z-index: 10;
   overflow-y: auto;
   transition: transform 0.3s ease-in-out;
-  
+
   @media (max-width: 768px) {
     position: absolute;
     left: 0;
@@ -25,8 +30,13 @@ const SidebarContainer = styled.div`
     transform: translateX(${(props) => (props.$isOpen ? '0' : '-100%')});
   }
 
-  &::-webkit-scrollbar { width: 5px; }
-  &::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+  }
 `;
 
 const MobileToggle = styled.button`
@@ -42,7 +52,9 @@ const MobileToggle = styled.button`
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
-  @media (max-width: 768px) { display: block; }
+  @media (max-width: 768px) {
+    display: block;
+  }
 `;
 
 const Logo = styled.div`
@@ -81,7 +93,11 @@ const SmallBtn = styled.button`
   cursor: pointer;
   font-size: 12px;
   transition: all 0.15s;
-  &:hover { background-color: #2a2a2a; color: #fff; border-color: #555; }
+  &:hover {
+    background-color: #2a2a2a;
+    color: #fff;
+    border-color: #555;
+  }
 `;
 
 const ToggleRow = styled.div`
@@ -131,7 +147,9 @@ const SizeSelect = styled.select`
   font-size: 12px;
   cursor: pointer;
   outline: none;
-  &:hover { border-color: #444; }
+  &:hover {
+    border-color: #444;
+  }
 `;
 
 const BrushBtn = styled.button`
@@ -145,7 +163,9 @@ const BrushBtn = styled.button`
   font-size: 11px;
   font-weight: 600;
   transition: all 0.15s;
-  &:hover { opacity: 0.85; }
+  &:hover {
+    opacity: 0.85;
+  }
 `;
 
 const LayerIndicator = styled.div`
@@ -174,7 +194,9 @@ const LayerBtn = styled.button`
   align-items: center;
   justify-content: center;
   transition: all 0.15s;
-  &:hover { background: #00e5ff22; }
+  &:hover {
+    background: #00e5ff22;
+  }
 `;
 
 const UploadLabel = styled.label`
@@ -189,8 +211,14 @@ const UploadLabel = styled.label`
   cursor: pointer;
   font-size: 12px;
   transition: all 0.2s;
-  &:hover { background-color: #222; color: #aaa; border-color: #555; }
-  input { display: none; }
+  &:hover {
+    background-color: #222;
+    color: #aaa;
+    border-color: #555;
+  }
+  input {
+    display: none;
+  }
 `;
 
 const Divider = styled.div`
@@ -199,12 +227,79 @@ const Divider = styled.div`
   margin: 4px 0;
 `;
 
-const BlockList = styled.div`
+const SearchInput = styled.input`
+  width: 100%;
+  background-color: #1a1a1a;
+  color: #fff;
+  border: 1px solid #333;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-bottom: 8px;
+  outline: none;
+  &:focus {
+    border-color: #00e5ff;
+  }
+`;
+
+const BlocksDrawer = styled.div`
+  position: fixed;
+  left: ${(props) => (props.$isOpen ? '260px' : '-100vw')};
+  top: 0;
+  width: 40%;
+  height: 100vh;
+  background-color: #1a1a1a;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 24px;
+  z-index: 15;
+  transition: left 0.3s ease-in-out;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  flex: 1;
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.8);
+
+  @media (max-width: 1000px) {
+    width: 60%;
+  }
+
+  @media (max-width: 768px) {
+    left: ${(props) => (props.$isOpen ? '0' : '-100vw')};
+    width: 85%;
+    z-index: 30;
+  }
+`;
+
+const BlocksDrawerHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+`;
+
+const BlocksDrawerTitle = styled.h2`
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  text-transform: uppercase;
+`;
+
+const BlocksGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
   overflow-y: auto;
+  flex: 1;
+  padding-right: 8px;
+
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+  }
 `;
 
 const HelpText = styled.div`
@@ -214,17 +309,38 @@ const HelpText = styled.div`
 `;
 
 export default function Sidebar() {
-  const { 
-    availableBlocks, selectedBlockType, setSelectedBlockType, 
-    startDrag, stopDrag, setBlocks, addCustomBlockType, 
-    shadowsEnabled, toggleShadows, 
-    showWorldBounds, toggleWorldBounds,
-    worldSize, setWorldSize, clearAllBlocks, getOutOfBoundsCount,
+  const {
+    availableBlocks,
+    selectedBlockType,
+    setSelectedBlockType,
+    startDrag,
+    stopDrag,
+    setBlocks,
+    addCustomBlockType,
+    shadowsEnabled,
+    toggleShadows,
+    showWorldBounds,
+    toggleWorldBounds,
+    worldSize,
+    setWorldSize,
+    clearAllBlocks,
+    getOutOfBoundsCount,
     blocks,
-    brushMode, toggleBrushMode, brushLayer, setBrushLayer, brushMarks,
-    confirmBrushMarks, clearBrushMarks, brushType, setBrushType
+    brushMode,
+    toggleBrushMode,
+    brushLayer,
+    setBrushLayer,
+    brushMarks,
+    confirmBrushMarks,
+    clearBrushMarks,
+    brushType,
+    setBrushType,
+    brushOrientation,
+    setBrushOrientation,
   } = useBlockStore();
   const [isOpen, setIsOpen] = React.useState(false);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [isBlocksOpen, setIsBlocksOpen] = React.useState(false);
 
   useEffect(() => {
     const handleUp = () => stopDrag();
@@ -248,6 +364,19 @@ export default function Sidebar() {
     }
   };
 
+  const handleDownloadFile = () => {
+    downloadProjectFile(blocks);
+  };
+
+  const handleUploadFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    loadProjectFile(file, (data) => {
+      setBlocks(data);
+    });
+    e.target.value = null;
+  };
+
   const handleClearAll = () => {
     if (blocks.length === 0) return;
     const confirmed = window.confirm(
@@ -259,7 +388,7 @@ export default function Sidebar() {
   const handleWorldSizeChange = (e) => {
     const newSizeId = e.target.value;
     const outCount = getOutOfBoundsCount(newSizeId);
-    
+
     if (outCount > 0) {
       const confirmed = window.confirm(
         `Atenção: ${outCount} bloco(s) estão fora dos limites do tamanho selecionado e serão removidos. Deseja continuar?`
@@ -269,7 +398,7 @@ export default function Sidebar() {
       }
       return;
     }
-    
+
     setWorldSize(newSizeId, false);
   };
 
@@ -306,13 +435,44 @@ export default function Sidebar() {
       <SidebarContainer $isOpen={isOpen}>
         <Logo>BlockForge</Logo>
 
+        <SmallBtn
+          style={{
+            backgroundColor: 'transparent',
+            color: '#00e5ff',
+            padding: '4px 0',
+            fontSize: '11px',
+            fontWeight: '600',
+            border: '1px solid #00e5ff44',
+            borderRadius: '4px',
+            cursor: 'pointer',
+          }}
+          onClick={() => setIsBlocksOpen(!isBlocksOpen)}
+        >
+          {isBlocksOpen ? '✕ Fechar Catálogo' : '📦 Catálogo'}
+        </SmallBtn>
+
         {/* ---- PROJECT ---- */}
         <SectionLabel>Projeto</SectionLabel>
         <ButtonRow>
           <SmallBtn onClick={handleSave}>💾 Salvar</SmallBtn>
           <SmallBtn onClick={handleLoad}>📂 Carregar</SmallBtn>
-          <SmallBtn onClick={handleClearAll} style={{ color: '#ff6b6b', flex: '0 0 auto', padding: '7px 10px' }}>
+          <SmallBtn
+            onClick={handleClearAll}
+            style={{ color: '#ff6b6b', flex: '0 0 auto', padding: '7px 10px' }}
+          >
             🗑️
+          </SmallBtn>
+        </ButtonRow>
+        <ButtonRow>
+          <SmallBtn onClick={handleDownloadFile}>📥 Baixar (.json)</SmallBtn>
+          <SmallBtn as="label" style={{ textAlign: 'center', margin: 0 }}>
+            📤 Abrir JSON
+            <input
+              type="file"
+              accept=".json"
+              onChange={handleUploadFile}
+              style={{ display: 'none' }}
+            />
           </SmallBtn>
         </ButtonRow>
 
@@ -320,7 +480,7 @@ export default function Sidebar() {
 
         {/* ---- SETTINGS ---- */}
         <SectionLabel>Configurações</SectionLabel>
-        
+
         <ToggleRow>
           <ToggleLabel>Sombras</ToggleLabel>
           <ToggleSwitch $active={shadowsEnabled} onClick={toggleShadows} />
@@ -331,10 +491,7 @@ export default function Sidebar() {
           <ToggleSwitch $active={showWorldBounds} onClick={toggleWorldBounds} />
         </ToggleRow>
 
-        <SizeSelect 
-          value={worldSize.id}
-          onChange={handleWorldSizeChange}
-        >
+        <SizeSelect value={worldSize.id} onChange={handleWorldSizeChange}>
           {WORLD_SIZES.map((size) => (
             <option key={size.id} value={size.id}>
               {size.label} ({size.width}×{size.height}×{size.depth})
@@ -346,7 +503,7 @@ export default function Sidebar() {
 
         {/* ---- BRUSH MODE ---- */}
         <SectionLabel>Modo Pincel</SectionLabel>
-        
+
         <BrushBtn $active={brushMode} onClick={toggleBrushMode}>
           {brushMode ? '✓ Pincel Ativado' : '🖌️ Ativar Pincel'}
         </BrushBtn>
@@ -354,36 +511,69 @@ export default function Sidebar() {
         {brushMode && (
           <>
             <ButtonRow>
-               <SmallBtn 
-                onClick={() => setBrushType('add')} 
-                style={{ 
+              <SmallBtn
+                onClick={() => setBrushType('add')}
+                style={{
                   backgroundColor: brushType === 'add' ? '#2a4433' : '#222',
                   borderColor: brushType === 'add' ? '#4cff88' : '#333',
-                  color: brushType === 'add' ? '#4cff88' : '#aaa'
+                  color: brushType === 'add' ? '#4cff88' : '#aaa',
                 }}
               >
                 Colocar
               </SmallBtn>
-              <SmallBtn 
+              <SmallBtn
                 onClick={() => setBrushType('remove')}
-                style={{ 
+                style={{
                   backgroundColor: brushType === 'remove' ? '#442a2a' : '#222',
                   borderColor: brushType === 'remove' ? '#ff6b6b' : '#333',
-                  color: brushType === 'remove' ? '#ff6b6b' : '#aaa'
+                  color: brushType === 'remove' ? '#ff6b6b' : '#aaa',
                 }}
               >
                 Remover
               </SmallBtn>
             </ButtonRow>
 
+            <SectionLabel style={{ marginTop: '6px', marginBottom: '2px' }}>
+              Orientação
+            </SectionLabel>
+            <ButtonRow>
+              <SmallBtn
+                onClick={() => setBrushOrientation('horizontal')}
+                style={{
+                  backgroundColor: brushOrientation === 'horizontal' ? '#1a2a44' : '#222',
+                  borderColor: brushOrientation === 'horizontal' ? '#5588ff' : '#333',
+                  color: brushOrientation === 'horizontal' ? '#5588ff' : '#aaa',
+                }}
+              >
+                ═ Horizontal
+              </SmallBtn>
+              <SmallBtn
+                onClick={() => setBrushOrientation('vertical')}
+                style={{
+                  backgroundColor: brushOrientation === 'vertical' ? '#2a1a44' : '#222',
+                  borderColor: brushOrientation === 'vertical' ? '#aa55ff' : '#333',
+                  color: brushOrientation === 'vertical' ? '#aa55ff' : '#aaa',
+                }}
+              >
+                ║ Vertical
+              </SmallBtn>
+            </ButtonRow>
+
             <LayerIndicator>
               <LayerBtn onClick={() => setBrushLayer(brushLayer - 1)}>−</LayerBtn>
-              <span>{brushType === 'add' ? `Parede: ${brushLayer} alt` : `Camada: ${brushLayer}`}</span>
+              <span>
+                {brushOrientation === 'vertical'
+                  ? `Altura: ${brushLayer}`
+                  : `Camada: ${brushLayer}`}
+              </span>
               <LayerBtn onClick={() => setBrushLayer(brushLayer + 1)}>+</LayerBtn>
             </LayerIndicator>
 
             <ButtonRow>
-              <SmallBtn onClick={confirmBrushMarks} style={{ color: '#00e5ff', borderColor: '#00e5ff44' }}>
+              <SmallBtn
+                onClick={confirmBrushMarks}
+                style={{ color: '#00e5ff', borderColor: '#00e5ff44' }}
+              >
                 ✓ Executar ({brushMarks.length})
               </SmallBtn>
               <SmallBtn onClick={clearBrushMarks} style={{ color: '#aaa' }}>
@@ -392,36 +582,52 @@ export default function Sidebar() {
             </ButtonRow>
 
             <HelpText>
-              Segure o mouse para marcar. Scroll muda {brushType === 'add' ? 'a altura da parede' : 'a camada'}. Clique em Executar.
+              {brushOrientation === 'vertical'
+                ? 'Vertical: pinta colunas do chão até a altura definida. Scroll muda a altura.'
+                : 'Horizontal: pinta na camada (altura) definida. Scroll muda a camada.'}
             </HelpText>
           </>
         )}
-
-        <Divider />
-
-        {/* ---- BLOCKS ---- */}
-        <SectionLabel>Blocos</SectionLabel>
 
         <UploadLabel>
           + Upload Imagem
           <input type="file" accept="image/png, image/jpeg" onChange={handleFileUpload} />
         </UploadLabel>
-
-        <BlockList>
-          {availableBlocks.map((block) => (
-            <BlockItem 
-              key={block.id}
-              block={block}
-              isSelected={selectedBlockType === block.id}
-              onSelect={() => setSelectedBlockType(block.id)}
-              onDragStart={() => {
-                setSelectedBlockType(block.id);
-                startDrag(block.id);
-              }}
-            />
-          ))}
-        </BlockList>
       </SidebarContainer>
+
+      <BlocksDrawer $isOpen={isBlocksOpen}>
+        <BlocksDrawerHeader>
+          <BlocksDrawerTitle>Catálogo de Blocos ({availableBlocks.length})</BlocksDrawerTitle>
+          <SmallBtn
+            onClick={() => setIsBlocksOpen(false)}
+            style={{ flex: 'none', width: '36px', height: '36px', padding: 0 }}
+          >
+            ✕
+          </SmallBtn>
+        </BlocksDrawerHeader>
+        <SearchInput
+          type="text"
+          placeholder="Buscar bloco..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <BlocksGrid>
+          {availableBlocks
+            .filter((b) => (b.label || '').toLowerCase().includes((searchTerm || '').toLowerCase()))
+            .map((block) => (
+              <BlockItem
+                key={block.id}
+                block={block}
+                isSelected={selectedBlockType === block.id}
+                onSelect={() => setSelectedBlockType(block.id)}
+                onDragStart={() => {
+                  setSelectedBlockType(block.id);
+                  startDrag(block.id);
+                }}
+              />
+            ))}
+        </BlocksGrid>
+      </BlocksDrawer>
     </>
   );
 }

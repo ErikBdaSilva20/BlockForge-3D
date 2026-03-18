@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { FALLBACK_BLOCKS } from '../config/blockTypes';
-import { fetchMinecraftBlocks } from '../services/minecraftService';
-import { adaptMinecraftBlocks } from '../adapters/minecraftAdapter';
+import { fetchMinecraftBlocks } from '../services/minecraftApi';
+import { adaptMinecraftBlocks } from '../adapters/blockAdapter';
 import { WORLD_SIZES } from '../utils/constants/worldSizes';
 
 function isInsideWorldDynamic(position, worldSize) {
@@ -43,6 +43,7 @@ export const useBlockStore = create((set, get) => ({
   brushMarks: [],
   brushDirection: 'x', // 'x' or 'z'
   brushType: 'add', // 'add' or 'remove'
+  brushOrientation: 'horizontal', // 'horizontal' or 'vertical'
 
   // History Methods
   _pushHistory: (newBlocks) => {
@@ -74,9 +75,11 @@ export const useBlockStore = create((set, get) => ({
     try {
       const data = await fetchMinecraftBlocks();
       const adapted = adaptMinecraftBlocks(data);
-      set({ availableBlocks: adapted, selectedBlockType: adapted[0].id });
+      if (adapted && adapted.length > 0) {
+        set({ availableBlocks: adapted, selectedBlockType: adapted[0].id });
+      }
     } catch (e) {
-      console.warn('Failed to load blocks from API, using fallback', e);
+      console.error('Failed to load blocks from API', e);
     }
   },
 
@@ -186,17 +189,21 @@ export const useBlockStore = create((set, get) => ({
   toggleBrushMode: () => set((state) => ({
     brushMode: !state.brushMode,
     brushMarks: [],
-    brushLayer: 0,
+    brushLayer: 1,
     brushDirection: 'x',
-    brushType: 'add'
+    brushType: 'add',
+    brushOrientation: 'horizontal'
   })),
+
+  setBrushOrientation: (orientation) => set({ brushOrientation: orientation }),
 
   setBrushDirection: (dir) => set({ brushDirection: dir }),
   setBrushType: (type) => set({ brushType: type }),
 
   setBrushLayer: (y) => {
     const ws = get().worldSize;
-    const clamped = Math.max(0, Math.min(y, ws.height));
+    // Camada mínima 1 para não colocar blocos na camada 0
+    const clamped = Math.max(1, Math.min(y, ws.height));
     set({ brushLayer: clamped });
   },
 
@@ -204,29 +211,30 @@ export const useBlockStore = create((set, get) => ({
     const ws = get().worldSize;
     if (!isInsideWorldDynamic(position, ws)) return;
     
-    const { blocks, brushType, brushLayer, brushDirection, brushMarks } = get();
+    const { blocks, brushType, brushLayer, brushDirection, brushMarks, brushOrientation } = get();
     
     let linePositions = [];
     
-    // Se for 'add', tentamos traçar uma parede na direção definida baseada na posição do mouse
     if (brushType === 'add') {
-       // Em vez de adicionar só um bloco, adicionamos uma linha baseada no brushDirection iterando até o chão ou topo
-       // O brush no modo parede funciona diferente: o usuário clica e uma parede é feita do ponto de impacto até a altura da camada
-       // Se brushDirection for horizontal/vertical, é a escolha do usuário.
-       // Neste caso específico, a instrução era sobre "comprimento da parede"
-       
-       // Para não complicar muito o raycasting: Apenas uma marca nesse X/Z que vai do Y atual até o brushLayer
        const [x, startY, z] = position;
-       const endY = brushLayer;
-       const minY = Math.min(startY, endY);
-       const maxY = Math.max(startY, endY);
        
-       for (let y = minY; y <= maxY; y++) {
-         if (y > ws.height) continue;
-         linePositions.push([x, y, z]);
+       if (brushOrientation === 'vertical') {
+         // Modo VERTICAL: constrói uma coluna do chão (1) até o brushLayer nessa posição X/Z
+         const minY = 1;
+         const maxY = brushLayer;
+         for (let y = minY; y <= maxY; y++) {
+           if (y > ws.height || y < 1) continue;
+           linePositions.push([x, y, z]);
+         }
+       } else {
+         // Modo HORIZONTAL: pintura plana na camada (brushLayer)
+         // Coloca bloco na camada definida pelo brushLayer
+         if (brushLayer >= 1 && brushLayer <= ws.height) {
+           linePositions.push([x, brushLayer, z]);
+         }
        }
     } else {
-       // Se for remove, apenas marca a posição atingida pelo raycast
+       // Se for remove, marca a posição atingida pelo raycast
        linePositions.push(position);
     }
 
