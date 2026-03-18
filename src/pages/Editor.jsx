@@ -3,6 +3,7 @@ import Scene from '../components/scene/Scene';
 import Sidebar from '../components/ui/Sidebar/Sidebar';
 import ShortcutsPanel from '../components/ui/ShortcutsPanel/ShortcutsPanel';
 import BrushFAB from '../components/ui/BrushFAB/BrushFAB';
+import TutorialOverlay from '../components/ui/TutorialOverlay/TutorialOverlay';
 import { useBlockStore } from '../store/blockStore';
 
 export default function Editor() {
@@ -51,6 +52,7 @@ export default function Editor() {
         <Scene />
         <ShortcutsPanel />
         <BrushFAB />
+        <TutorialOverlay />
       </div>
     </div>
   );
