@@ -86,23 +86,23 @@ const Dot = styled.div`
 const TUTORIAL_STEPS = [
   {
     title: 'Bem-vindo ao BlockForge!',
-    text: 'Este projeto é um poderoso editor 3D para modelos do Minecraft diretamente no seu navegador. Vamos fazer um rápido tour para você conhecer as principais funcionalidades!',
+    text: 'Este é um editor 3D poderoso para criar e visualizar modelos do Minecraft diretamente no seu navegador. Vamos te guiar rapidamente pelas ferramentas!',
   },
   {
-    title: '📂 Projeto ',
-    text: 'Acessando o menu lateral esquerdo, em "Projeto", você pode salvar seu progresso no armazenamento local do navegador, carregar projetos passados, ou importar/exportar seu mundo como um arquivo JSON.',
+    title: '📂 Gerenciar Projeto',
+    text: 'Para prosseguir na aplicação e gerenciar seu trabalho, use o menu lateral. Lá você pode salvar seu progresso no navegador, carregar projetos ou baixar seu mundo como um arquivo JSON.',
   },
   {
-    title: '⚙️ Configurações',
-    text: 'Nesta seção, você pode ligar as sombras (para gráficos mais bonitos), ativar as bordas dinâmicas do mundo, e principalmente, escolher o tamanho da grade (Pequeno, Médio, Grande, etc).',
+    title: '⚙️ Configurações do Mundo',
+    text: 'Ajuste o tamanho do cenário (Pequeno a Gigante), ligue as sombras para melhores gráficos ou ative as bordas para não se perder na construção.',
   },
   {
-    title: '🖌️ Modo Pincel',
-    text: 'Cansado de colocar bloco por bloco? Ative o Pincel (pelo botão flutuante no canto da tela ou no menu lateral)! Você pode desenhar "Colunas" Verticais infinitas ou construir pisos e tetos desenhando de forma Horizontal na camada desejada!',
+    title: '🖌️ Ferramenta de Pincel',
+    text: 'Use o botão de "+" no canto da tela para abrir o menu do Pincel. Você pode escolher entre pintar na Vertical (paredes) ou Horizontal (pisos), além de alternar entre o Lápis e a Borracha.',
   },
   {
     title: '📦 Catálogo de Blocos',
-    text: 'Clicando no botão azul de Catálogo no topo do menu lateral, uma gaveta se abrirá com mais de 300 blocos nativos do Minecraft para você selecionar. Use a barra de pesquisa para achar qualquer bloco rapidamente.',
+    text: 'Abra o Catálogo no topo do menu lateral para escolher entre centenas de blocos reais do Minecraft. Use a pesquisa para encontrar o que precisa instantaneamente!',
   },
 ];
 
