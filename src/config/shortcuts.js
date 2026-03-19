@@ -3,7 +3,8 @@
 
 export const SHORTCUTS = [
   { keys: 'Clique Esquerdo', action: 'Colocar bloco', category: 'Construção' },
-  { keys: 'Shift + Alt + Clique', action: 'Remover bloco', category: 'Construção' },
+  { keys: '🧼 Borracha (Botão)', action: 'Modo remoção rápida (Clique remove)', category: 'Construção' },
+  { keys: 'Shift + Alt + Clique', action: 'Remover bloco (Clássico)', category: 'Construção' },
   { keys: 'Ctrl + Z', action: 'Desfazer', category: 'Edição' },
   { keys: 'Ctrl + Y', action: 'Refazer', category: 'Edição' },
   { keys: 'Ctrl + Shift + Z', action: 'Refazer (alternativo)', category: 'Edição' },
@@ -14,6 +15,7 @@ export const SHORTCUTS = [
   { keys: 'Ctrl + Clique', action: 'Multi-selecionar bloco', category: 'Seleção' },
   { keys: 'Shift + Clique', action: 'Multi-selecionar bloco', category: 'Seleção' },
   { keys: 'Segurar Shift + Arrastar', action: 'Selecionar vários blocos em caixa (Área)', category: 'Seleção' },
+  { keys: 'Modo Selecionar (Pincel)', action: 'Selecionar blocos arrastando o mouse', category: 'Pincel' },
   { keys: 'Clique no chão', action: 'Limpar seleção', category: 'Seleção' },
   { keys: 'Arrastar da Sidebar', action: 'Drag & Drop de bloco', category: 'Construção' },
   { keys: 'Scroll (Pincel)', action: 'Mudar camada/tamanho da parede', category: 'Pincel' },

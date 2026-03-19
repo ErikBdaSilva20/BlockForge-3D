@@ -15,27 +15,39 @@ const SidebarContainer = styled.div`
   height: 100vh;
   background-color: #151515;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 20px 16px;
+  padding: 24px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  z-index: 10;
+  gap: 12px;
+  z-index: 100;
   overflow-y: auto;
-  transition: transform 0.3s ease-in-out;
+  overflow-x: hidden;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
 
   @media (max-width: 768px) {
-    position: absolute;
+    position: fixed;
     left: 0;
     top: 0;
+    width: 280px;
+    height: 100%;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
     transform: translateX(${(props) => (props.$isOpen ? '0' : '-100%')});
   }
 
+  /* Custom scrollbar to keep it clean */
   &::-webkit-scrollbar {
-    width: 5px;
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
   }
   &::-webkit-scrollbar-thumb {
-    background: #333;
-    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
   }
 `;
 
@@ -58,6 +70,7 @@ const MobileToggle = styled.button`
 `;
 
 const Logo = styled.div`
+  flex-shrink: 0;
   font-size: 18px;
   font-weight: 700;
   color: #fff;
@@ -69,6 +82,7 @@ const Logo = styled.div`
 `;
 
 const SectionLabel = styled.div`
+  flex-shrink: 0;
   font-size: 10px;
   font-weight: 600;
   color: #666;
@@ -79,6 +93,7 @@ const SectionLabel = styled.div`
 `;
 
 const ButtonRow = styled.div`
+  flex-shrink: 0;
   display: flex;
   gap: 6px;
 `;
@@ -101,6 +116,7 @@ const SmallBtn = styled.button`
 `;
 
 const ToggleRow = styled.div`
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -138,6 +154,7 @@ const ToggleSwitch = styled.button`
 `;
 
 const SizeSelect = styled.select`
+  flex-shrink: 0;
   width: 100%;
   background: #1a1a1a;
   color: #ccc;
@@ -153,6 +170,7 @@ const SizeSelect = styled.select`
 `;
 
 const BrushBtn = styled.button`
+  flex-shrink: 0;
   width: 100%;
   background-color: ${(props) => (props.$active ? '#00e5ff' : '#222')};
   color: ${(props) => (props.$active ? '#000' : '#aaa')};
@@ -169,6 +187,7 @@ const BrushBtn = styled.button`
 `;
 
 const LayerIndicator = styled.div`
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -199,7 +218,14 @@ const LayerBtn = styled.button`
   }
 `;
 
+const DesktopOnlyBtn = styled(SmallBtn)`
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
 const UploadLabel = styled.label`
+  flex-shrink: 0;
   display: block;
   width: 100%;
   text-align: center;
@@ -210,6 +236,7 @@ const UploadLabel = styled.label`
   border-radius: 6px;
   cursor: pointer;
   font-size: 12px;
+  margin-bottom: 24px; /* Added margin for better mobile accessibility */
   transition: all 0.2s;
   &:hover {
     background-color: #222;
@@ -222,6 +249,7 @@ const UploadLabel = styled.label`
 `;
 
 const Divider = styled.div`
+  flex-shrink: 0;
   height: 1px;
   background: rgba(255, 255, 255, 0.05);
   margin: 4px 0;
@@ -303,6 +331,7 @@ const BlocksGrid = styled.div`
 `;
 
 const HelpText = styled.div`
+  flex-shrink: 0;
   font-size: 10px;
   color: #555;
   line-height: 1.4;
@@ -341,6 +370,8 @@ export default function Sidebar() {
     setBrushType,
     brushOrientation,
     setBrushOrientation,
+    isEraseMode,
+    toggleEraseMode,
   } = useBlockStore();
   const [isOpen, setIsOpen] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -470,7 +501,7 @@ export default function Sidebar() {
       <SidebarContainer ref={sidebarRef} $isOpen={isOpen}>
         <Logo>BlockForge</Logo>
 
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px', flexShrink: 0 }}>
           <SmallBtn
             id="catalog-btn"
             style={{
@@ -501,6 +532,17 @@ export default function Sidebar() {
           >
             🗑️
           </SmallBtn>
+          <DesktopOnlyBtn
+            onClick={toggleEraseMode}
+            style={{ 
+              backgroundColor: isEraseMode ? '#ff6b6b33' : '#222',
+              color: isEraseMode ? '#ff6b6b' : '#aaa',
+              borderColor: isEraseMode ? '#ff6b6b55' : '#333',
+              flex: '1'
+            }}
+          >
+            {isEraseMode ? '🧼 Parar Borracha' : '🧼 Borracha (Clique)'}
+          </DesktopOnlyBtn>
         </ButtonRow>
         <ButtonRow>
           <SmallBtn onClick={handleDownloadFile}>📥 Baixar (.json)</SmallBtn>
@@ -592,6 +634,16 @@ export default function Sidebar() {
                 }}
               >
                 Remover
+              </SmallBtn>
+              <SmallBtn
+                onClick={() => setBrushType('select')}
+                style={{
+                  backgroundColor: brushType === 'select' ? '#2a3a44' : '#222',
+                  borderColor: brushType === 'select' ? '#55ccff' : '#333',
+                  color: brushType === 'select' ? '#55ccff' : '#aaa',
+                }}
+              >
+                Selecionar
               </SmallBtn>
             </ButtonRow>
 

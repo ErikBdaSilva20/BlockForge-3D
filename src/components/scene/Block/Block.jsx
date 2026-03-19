@@ -93,8 +93,20 @@ async function loadTextureWithFallback(primaryUrl) {
   return promise;
 }
 
-const Block = memo(({ id, position, type }) => {
-  const { addBlock, removeBlock, selectedBlockType, isDragging, availableBlocks, worldSize, selectedBlocksIDs, selectBlock, shadowsEnabled, brushMode } = useBlockStore();
+  const Block = memo(({ id, position, type }) => {
+  const { 
+    addBlock, 
+    removeBlock, 
+    selectedBlockType, 
+    isDragging, 
+    availableBlocks, 
+    worldSize, 
+    selectedBlocksIDs, 
+    selectBlock, 
+    shadowsEnabled, 
+    brushMode, 
+    isEraseMode 
+  } = useBlockStore();
   const [hovered, setHovered] = useState(false);
   const [map, setMap] = useState(null);
   const mountedRef = useRef(true);
@@ -125,11 +137,10 @@ const Block = memo(({ id, position, type }) => {
     // Carregar (async com fallback automático)
     loadTextureWithFallback(textureUrl).then((tex) => {
       if (mountedRef.current) {
-        console.log(`Loaded texture for ${type}:`, !!tex, tex ? tex.image?.src : null);
         setMap(tex);
       }
     });
-  }, [blockConfig?.texture]);
+  }, [blockConfig?.texture, type, blockConfig]);
 
   const isTransparent = blockConfig?.transparent || (type && (type.includes('glass') || type.includes('ice')));
   const fallbackColor = blockConfig?.color || '#888888';
@@ -148,7 +159,17 @@ const Block = memo(({ id, position, type }) => {
       castShadow={shadowsEnabled}
       receiveShadow={shadowsEnabled}
       userData={{ isTarget: true, isBlock: true, id, type }}
-      onPointerOver={(e) => { if (brushMode) return; e.stopPropagation(); setHovered(true); }}
+      onPointerOver={(e) => { 
+        if (brushMode) {
+          const state = useBlockStore.getState();
+          if (state.isPainting) {
+            state.addBrushMark(position);
+          }
+          return;
+        }
+        e.stopPropagation(); 
+        setHovered(true); 
+      }}
       onPointerOut={(e) => { if (brushMode) return; e.stopPropagation(); setHovered(false); }}
       onPointerDown={(e) => {
         if (brushMode) return;
@@ -164,6 +185,12 @@ const Block = memo(({ id, position, type }) => {
         e.stopPropagation();
         
         if (useBlockStore.getState().isSelectingArea) return;
+
+        // NEW: Erase mode logic
+        if (isEraseMode) {
+          removeBlock(id);
+          return;
+        }
 
         if (e.shiftKey && e.altKey) {
           removeBlock(id);

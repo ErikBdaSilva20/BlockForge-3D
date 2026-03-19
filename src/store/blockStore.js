@@ -39,11 +39,13 @@ export const useBlockStore = create((set, get) => ({
 
   // Brush Mode
   brushMode: false,
-  brushLayer: 0,
+  brushLayer: 1,
   brushMarks: [],
   brushDirection: 'x', // 'x' or 'z'
-  brushType: 'add', // 'add' or 'remove'
+  brushType: 'add', // 'add', 'remove' or 'select'
   brushOrientation: 'horizontal', // 'horizontal' or 'vertical'
+  isEraseMode: false, // New: Toggle for one-click removal
+  isPainting: false, // New: Tracks if user is currently painting/dragging the brush
 
   // History Methods
   _pushHistory: (newBlocks) => {
@@ -184,6 +186,7 @@ export const useBlockStore = create((set, get) => ({
   stopDrag: () => set({ isDragging: false, draggedType: null }),
   toggleShadows: () => set((state) => ({ shadowsEnabled: !state.shadowsEnabled })),
   toggleWorldBounds: () => set((state) => ({ showWorldBounds: !state.showWorldBounds })),
+  toggleEraseMode: () => set((state) => ({ isEraseMode: !state.isEraseMode, brushMode: false })),
 
   // Brush Mode Actions
   toggleBrushMode: () => set((state) => ({
@@ -192,7 +195,8 @@ export const useBlockStore = create((set, get) => ({
     brushLayer: 1,
     brushDirection: 'x',
     brushType: 'add',
-    brushOrientation: 'horizontal'
+    brushOrientation: 'horizontal',
+    isEraseMode: false
   })),
 
   setBrushOrientation: (orientation) => set({ brushOrientation: orientation }),
@@ -206,6 +210,8 @@ export const useBlockStore = create((set, get) => ({
     const clamped = Math.max(1, Math.min(y, ws.height));
     set({ brushLayer: clamped });
   },
+
+  setIsPainting: (val) => set({ isPainting: val }),
 
   addBrushMark: (position) => {
     const ws = get().worldSize;
@@ -244,9 +250,8 @@ export const useBlockStore = create((set, get) => ({
          const key = pos.join(',');
          // Don't mark where a block already exists if adding
          const blockExists = blocks.some(b => b.position[0] === pos[0] && b.position[1] === pos[1] && b.position[2] === pos[2]);
-         
-         if (brushType === 'add' && blockExists) return;
-         if (brushType === 'remove' && !blockExists) return;
+                  if (brushType === 'add' && blockExists) return;
+          if ((brushType === 'remove' || brushType === 'select') && !blockExists) return;
          
          if (!newMarks.some(m => m.join(',') === key)) {
            newMarks.push(pos);
@@ -282,11 +287,18 @@ export const useBlockStore = create((set, get) => ({
     } else if (brushType === 'remove') {
       const markKeys = new Set(brushMarks.map(pos => pos.join(',')));
       newBlocks = blocks.filter(b => !markKeys.has(b.position.join(',')));
+    } else if (brushType === 'select') {
+      const markKeys = new Set(brushMarks.map(pos => pos.join(',')));
+      const selectedIds = blocks
+        .filter(b => markKeys.has(b.position.join(',')))
+        .map(b => b.id);
+      set({ selectedBlocksIDs: selectedIds, brushMarks: [] });
+      return; // Do not push history for selection
     }
     
     get()._pushHistory(newBlocks);
-    set({ brushMarks: [] });
+    set({ brushMarks: [], isPainting: false });
   },
 
-  clearBrushMarks: () => set({ brushMarks: [] }),
+  clearBrushMarks: () => set({ brushMarks: [], isPainting: false }),
 }));

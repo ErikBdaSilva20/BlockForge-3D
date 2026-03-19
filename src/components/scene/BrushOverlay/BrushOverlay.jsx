@@ -4,14 +4,13 @@ import { useBlockStore } from '../../../store/blockStore';
 import { snapToGrid } from '../../../utils/math/snapToGrid';
 
 export default function BrushOverlay() {
-  const { brushMode, brushLayer, brushMarks, addBrushMark, worldSize } = useBlockStore();
-  const isPaintingRef = useRef(false);
+  const { brushMode, brushLayer, brushMarks, addBrushMark, worldSize, isPainting, setIsPainting, brushType } = useBlockStore();
   const layerMeshRef = useRef();
   
-  const { raycaster, camera, pointer, scene } = useThree();
-
+  const { raycaster, camera, pointer } = useThree();
+ 
   useFrame(() => {
-    if (!brushMode || !isPaintingRef.current) return;
+    if (!brushMode || !isPainting) return;
 
     raycaster.setFromCamera(pointer, camera);
     
@@ -40,12 +39,12 @@ export default function BrushOverlay() {
 
   const handlePointerDown = useCallback((e) => {
     if (!brushMode || e.button !== 0) return;
-    isPaintingRef.current = true;
-  }, [brushMode]);
+    setIsPainting(true);
+  }, [brushMode, setIsPainting]);
 
   const handlePointerUp = useCallback(() => {
-    isPaintingRef.current = false;
-  }, []);
+    setIsPainting(false);
+  }, [setIsPainting]);
 
   // Register global listeners for paint tracking
   React.useEffect(() => {
@@ -60,6 +59,12 @@ export default function BrushOverlay() {
 
   if (!brushMode) return null;
 
+  const getMarkColor = () => {
+    if (brushType === 'remove') return '#ff4444';
+    if (brushType === 'select') return '#55ccff';
+    return '#00e5ff';
+  };
+
   return (
     <group>
       {/* Layer indicator plane */}
@@ -69,14 +74,24 @@ export default function BrushOverlay() {
         position={[0, brushLayer + 0.01, 0]}
       >
         <planeGeometry args={[worldSize.width, worldSize.depth]} />
-        <meshBasicMaterial color="#00e5ff" transparent opacity={0.04} depthWrite={false} />
+        <meshBasicMaterial 
+          color={getMarkColor()} 
+          transparent 
+          opacity={0.04} 
+          depthWrite={false} 
+        />
       </mesh>
 
       {/* Render brush marks as ghost blocks */}
       {brushMarks.map((pos, i) => (
         <mesh key={`mark-${i}`} position={[pos[0], pos[1], pos[2]]}>
           <boxGeometry args={[0.96, 0.96, 0.96]} />
-          <meshBasicMaterial color="#00e5ff" transparent opacity={0.3} depthWrite={false} />
+          <meshBasicMaterial 
+            color={getMarkColor()} 
+            transparent 
+            opacity={0.3} 
+            depthWrite={false} 
+          />
         </mesh>
       ))}
     </group>
