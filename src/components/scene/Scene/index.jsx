@@ -17,7 +17,10 @@ function SceneContent() {
   const blocks = useBlockStore((state) => state.blocks);
   const brushMode = useBlockStore((state) => state.brushMode);
   const brushLayer = useBlockStore((state) => state.brushLayer);
+  const isPainting = useBlockStore((state) => state.isPainting);
   const controlsRef = useRef();
+
+  const isMobile = window.innerWidth <= 768;
 
   // Intercept scroll in brush mode to change layer instead of zoom
   const handleWheel = useCallback((e) => {
@@ -62,16 +65,16 @@ function SceneContent() {
         ref={controlsRef}
         makeDefault 
         mouseButtons={{
-          LEFT: THREE.MOUSE.NONE, 
+          LEFT: THREE.MOUSE.ROTATE, 
           MIDDLE: THREE.MOUSE.PAN, 
           RIGHT: THREE.MOUSE.ROTATE 
         }}
         touches={{
-          ONE: brushMode ? THREE.TOUCH.NONE : THREE.TOUCH.ROTATE,
-          TWO: brushMode ? THREE.TOUCH.NONE : THREE.TOUCH.DOLLY_PAN
+          ONE: (brushMode && isMobile) ? THREE.TOUCH.NONE : THREE.TOUCH.ROTATE,
+          TWO: (brushMode && isMobile) ? THREE.TOUCH.NONE : THREE.TOUCH.DOLLY_PAN
         }}
-        enableRotate={!brushMode}
-        enablePan={!brushMode}
+        enableRotate={!(brushMode && isMobile)}
+        enablePan={!(brushMode && isMobile)}
         minDistance={5}
         maxDistance={45}
         maxPolarAngle={Math.PI / 2 - 0.05}
