@@ -39,7 +39,7 @@ export const useBlockStore = create((set, get) => ({
 
   // Brush Mode
   brushMode: false,
-  brushLayer: 1,
+  brushLayer: 0,
   brushMarks: [],
   brushDirection: 'x', // 'x' or 'z'
   brushType: 'add', // 'add', 'remove' or 'select'
@@ -192,7 +192,7 @@ export const useBlockStore = create((set, get) => ({
   toggleBrushMode: () => set((state) => ({
     brushMode: !state.brushMode,
     brushMarks: [],
-    brushLayer: 1,
+    brushLayer: 0,
     brushDirection: 'x',
     brushType: 'add',
     brushOrientation: 'horizontal',
@@ -206,8 +206,7 @@ export const useBlockStore = create((set, get) => ({
 
   setBrushLayer: (y) => {
     const ws = get().worldSize;
-    // Camada mínima 1 para não colocar blocos na camada 0
-    const clamped = Math.max(1, Math.min(y, ws.height));
+    const clamped = Math.max(0, Math.min(y, ws.height));
     set({ brushLayer: clamped });
   },
 
@@ -223,24 +222,19 @@ export const useBlockStore = create((set, get) => ({
     const [x, startY, z] = position;
 
     if (brushOrientation === 'vertical') {
-      // Modo VERTICAL: constrói ou remove uma coluna do chão (1) até o brushLayer nessa posição X/Z
-      const minY = 1;
+      // Modo VERTICAL: constrói ou remove uma coluna do chão (0) até o brushLayer
+      const minY = 0;
       const maxY = brushLayer;
       for (let y = minY; y <= maxY; y++) {
-        if (y > ws.height || y < 1) continue;
-        linePositions.push([x, y, z]);
+        if (y > ws.height || y < 0) continue;
+        const snappedPos = snapToGrid([x, y, z]);
+        linePositions.push(snappedPos);
       }
     } else {
       // Modo HORIZONTAL
-      if (brushType === 'add') {
-        // Coloca bloco na camada definida pelo brushLayer
-        if (brushLayer >= 1 && brushLayer <= ws.height) {
-          linePositions.push([x, brushLayer, z]);
-        }
-      } else {
-        // Se for remove, marca a posição atingida pelo raycast
-        // Em brush de pintura mista, remove foca apenas no bloco da camada do brushLayer
-        linePositions.push([x, brushLayer, z]);
+      if (brushType === 'add' || brushType === 'remove' || brushType === 'select') {
+        const snappedPos = snapToGrid([x, brushLayer, z]);
+        linePositions.push(snappedPos);
       }
     }
 
@@ -248,8 +242,11 @@ export const useBlockStore = create((set, get) => ({
       let newMarks = [...state.brushMarks];
       linePositions.forEach(pos => {
          const key = pos.join(',');
-         // Don't mark where a block already exists if adding
-         const blockExists = blocks.some(b => b.position[0] === pos[0] && b.position[1] === pos[1] && b.position[2] === pos[2]);
+         const blockExists = blocks.some(b => 
+           Math.abs(b.position[0] - pos[0]) < 0.1 && 
+           Math.abs(b.position[1] - pos[1]) < 0.1 && 
+           Math.abs(b.position[2] - pos[2]) < 0.1
+         );
                   if (brushType === 'add' && blockExists) return;
           if ((brushType === 'remove' || brushType === 'select') && !blockExists) return;
          
@@ -278,15 +275,23 @@ export const useBlockStore = create((set, get) => ({
       for (const pos of brushMarks) {
         if (!isInsideWorldDynamic(pos, worldSize)) continue;
         const exists = newBlocks.find(
-          b => b.position[0] === pos[0] && b.position[1] === pos[1] && b.position[2] === pos[2]
+          b => 
+            Math.abs(b.position[0] - pos[0]) < 0.1 && 
+            Math.abs(b.position[1] - pos[1]) < 0.1 && 
+            Math.abs(b.position[2] - pos[2]) < 0.1
         );
         if (!exists) {
           newBlocks.push({ id: uuidv4(), position: pos, type: selectedBlockType });
         }
       }
     } else if (brushType === 'remove') {
-      const markKeys = new Set(brushMarks.map(pos => pos.join(',')));
-      newBlocks = blocks.filter(b => !markKeys.has(b.position.join(',')));
+      newBlocks = blocks.filter(b => {
+        return !brushMarks.some(m => 
+           Math.abs(b.position[0] - m[0]) < 0.1 && 
+           Math.abs(b.position[1] - m[1]) < 0.1 && 
+           Math.abs(b.position[2] - m[2]) < 0.1
+        );
+      });
     } else if (brushType === 'select') {
       const markKeys = new Set(brushMarks.map(pos => pos.join(',')));
       const selectedIds = blocks
