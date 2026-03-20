@@ -506,7 +506,9 @@ export default function Sidebar() {
       <SidebarContainer ref={sidebarRef} $isOpen={isOpen}>
         <Logo>BlockForge</Logo>
 
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px', flexShrink: 0 }}>
+        <div
+          style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px', flexShrink: 0 }}
+        >
           <SmallBtn
             id="catalog-btn"
             style={{
@@ -539,11 +541,11 @@ export default function Sidebar() {
           </SmallBtn>
           <DesktopOnlyBtn
             onClick={toggleEraseMode}
-            style={{ 
+            style={{
               backgroundColor: isEraseMode ? '#ff6b6b33' : '#222',
               color: isEraseMode ? '#ff6b6b' : '#aaa',
               borderColor: isEraseMode ? '#ff6b6b55' : '#333',
-              flex: '1'
+              flex: '1',
             }}
           >
             {isEraseMode ? '🧼 Parar Borracha' : '🧼 Borracha (Clique)'}
@@ -563,22 +565,22 @@ export default function Sidebar() {
         </ButtonRow>
 
         <ButtonRow>
-          <SmallBtn 
-            onClick={undo} 
-            $disabled={past.length === 0} 
-            style={{ 
+          <SmallBtn
+            onClick={undo}
+            $disabled={past.length === 0}
+            style={{
               opacity: past.length === 0 ? 0.4 : 1,
-              pointerEvents: past.length === 0 ? 'none' : 'auto'
+              pointerEvents: past.length === 0 ? 'none' : 'auto',
             }}
           >
             ↩️ Desfazer
           </SmallBtn>
-          <SmallBtn 
-            onClick={redo} 
-            $disabled={future.length === 0} 
-            style={{ 
+          <SmallBtn
+            onClick={redo}
+            $disabled={future.length === 0}
+            style={{
               opacity: future.length === 0 ? 0.4 : 1,
-              pointerEvents: future.length === 0 ? 'none' : 'auto'
+              pointerEvents: future.length === 0 ? 'none' : 'auto',
             }}
           >
             ↪️ Refazer
@@ -591,12 +593,12 @@ export default function Sidebar() {
         <SectionLabel>Orientação do Bloco</SectionLabel>
         <ButtonRow>
           <SmallBtn onClick={cycleRotation}>🔄 Girar (R)</SmallBtn>
-          <SmallBtn 
+          <SmallBtn
             onClick={toggleCurrentFlipped}
-            style={{ 
+            style={{
               backgroundColor: currentFlipped ? 'rgba(0, 229, 255, 0.1)' : '#222',
               color: currentFlipped ? '#00e5ff' : '#aaa',
-              borderColor: currentFlipped ? 'rgba(0, 229, 255, 0.4)' : '#333'
+              borderColor: currentFlipped ? 'rgba(0, 229, 255, 0.4)' : '#333',
             }}
           >
             {currentFlipped ? '⏫ Invertido' : '⏬ Normal (F)'}
@@ -769,8 +771,18 @@ export default function Sidebar() {
                 }}
               />
             ))}
-          {availableBlocks.filter((b) => (b.label || '').toLowerCase().includes((searchTerm || '').toLowerCase())).length > 80 && (
-            <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '10px', color: '#666', fontSize: '11px' }}>
+          {availableBlocks.filter((b) =>
+            (b.label || '').toLowerCase().includes((searchTerm || '').toLowerCase())
+          ).length > 80 && (
+            <div
+              style={{
+                gridColumn: '1/-1',
+                textAlign: 'center',
+                padding: '10px',
+                color: '#666',
+                fontSize: '11px',
+              }}
+            >
               Mostrando os primeiros 80 resultados. Tente uma busca mais específica.
             </div>
           )}

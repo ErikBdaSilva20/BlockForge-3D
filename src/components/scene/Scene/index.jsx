@@ -57,9 +57,9 @@ function SceneContent() {
           ONE: brushMode && isMobile ? THREE.TOUCH.NONE : THREE.TOUCH.ROTATE,
           TWO: brushMode && isMobile ? THREE.TOUCH.NONE : THREE.TOUCH.DOLLY_PAN,
         }}
-        enableRotate={!brushMode}
-        enablePan={!brushMode}
-        enableZoom={!brushMode}
+        enableRotate={true}
+        enablePan={true}
+        enableZoom={true}
         minDistance={5}
         maxDistance={45}
         maxPolarAngle={Math.PI / 2 - 0.05}

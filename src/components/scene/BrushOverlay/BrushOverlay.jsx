@@ -1,5 +1,5 @@
 import { useFrame, useThree } from '@react-three/fiber';
-import { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { useBlockStore } from '../../../store/blockStore';
 import { snapToGrid } from '../../../utils/math/snapToGrid';
@@ -47,6 +47,7 @@ export default function BrushOverlay() {
     if (!brushMode) return;
 
     const onDown = (e) => {
+      // Pincel agora é no CLIQUE ESQUERDO (0) e o Direito (2) mexe a tela
       if (e.button !== 0) return;
       setIsPainting(true);
     };
@@ -138,17 +139,18 @@ export default function BrushOverlay() {
 
   const { scene: dummy } = useThree(); // trigger re-render on scene change if needed
 
-  
   // Ref for efficient cursor tracking in useFrame
   const currentHoverPosRef = useRef([0, 0, 0]);
   const verticalGuideRef = useRef();
 
   useFrame(() => {
     if (!brushMode) return;
-    
+
     raycaster.setFromCamera(pointer, camera);
-    const intersects = raycaster.intersectObjects(scene.children, true).filter(i => !i.object.userData.isPreview);
-    
+    const intersects = raycaster
+      .intersectObjects(scene.children, true)
+      .filter((i) => !i.object.userData.isPreview);
+
     // Determine the position under the cursor for both orientation modes
     let snapped = null;
     if (brushOrientation === 'horizontal') {
@@ -162,9 +164,11 @@ export default function BrushOverlay() {
         }
       }
     } else {
-      const hit = intersects.find(i => i.object?.userData?.isTarget);
+      const hit = intersects.find((i) => i.object?.userData?.isTarget);
       if (hit) {
-        const p = hit.object.userData.isBlock ? hit.object.parent.position.toArray() : [hit.point.x, 0, hit.point.z];
+        const p = hit.object.userData.isBlock
+          ? hit.object.parent.position.toArray()
+          : [hit.point.x, 0, hit.point.z];
         snapped = snapToGrid(p);
       }
     }
@@ -174,7 +178,7 @@ export default function BrushOverlay() {
       if (hoveredMarkKey !== key) {
         setHoveredMarkKey(key);
       }
-      
+
       // Update vertical pillar if needed
       if (verticalGuideRef.current && brushOrientation === 'vertical') {
         verticalGuideRef.current.position.set(snapped[0], brushLayer / 2 + 0.5, snapped[2]);
@@ -186,7 +190,8 @@ export default function BrushOverlay() {
 
   if (!brushMode) return null;
 
-  const baseMarkColor = brushType === 'remove' ? '#ff4444' : brushType === 'select' ? '#55ccff' : '#00e5ff';
+  const baseMarkColor =
+    brushType === 'remove' ? '#ff4444' : brushType === 'select' ? '#55ccff' : '#00e5ff';
 
   return (
     <group>
@@ -197,13 +202,13 @@ export default function BrushOverlay() {
             args={[
               Math.max(worldSize.width, worldSize.depth),
               Math.max(worldSize.width, worldSize.depth),
-              '#888888',
-              '#ffffff11',
+              '#006572',
+              '#383838',
             ]}
           />
           <mesh rotation={[-Math.PI / 2, 0, 0]} userData={{ isPreview: true }}>
             <planeGeometry args={[worldSize.width, worldSize.depth]} />
-            <meshBasicMaterial color="#ffffff" transparent opacity={0.015} depthWrite={false} />
+            <meshBasicMaterial color="#ffffff" transparent opacity={0.01} depthWrite={false} />
           </mesh>
         </group>
       )}
@@ -213,11 +218,11 @@ export default function BrushOverlay() {
         <group ref={verticalGuideRef}>
           <mesh userData={{ isPreview: true }}>
             <boxGeometry args={[1.05, brushLayer + 1, 1.05]} />
-            <meshBasicMaterial color="white" transparent opacity={0.05} depthWrite={false} />
+            <meshBasicMaterial color="white" transparent opacity={0.03} depthWrite={false} />
           </mesh>
           <lineSegments>
-             <edgesGeometry args={[new THREE.BoxGeometry(1.05, brushLayer + 1, 1.05)]} />
-             <lineBasicMaterial color="#888888" transparent opacity={0.6} />
+            <edgesGeometry args={[new THREE.BoxGeometry(1.05, brushLayer + 1, 1.05)]} />
+            <lineBasicMaterial color="#444444" transparent opacity={0.5} />
           </lineSegments>
         </group>
       )}
@@ -226,17 +231,32 @@ export default function BrushOverlay() {
       {brushMarks.map((pos, i) => {
         const key = pos.join(',');
         const isHovered = key === hoveredMarkKey;
-        const color = isHovered ? '#ffff00' : (brushType === 'remove' ? '#ff4444' : brushType === 'select' ? '#55ccff' : '#00e5ff');
-        
+        const color = isHovered
+          ? '#ffff00'
+          : brushType === 'remove'
+            ? '#ff4444'
+            : brushType === 'select'
+              ? '#55ccff'
+              : '#00e5ff';
+
         return (
           <group key={`mark-${i}`} position={[pos[0], pos[1], pos[2]]}>
             <mesh userData={{ isPreview: true }}>
               <boxGeometry args={[0.98, 0.98, 0.98]} />
-              <meshBasicMaterial color={color} transparent opacity={isHovered ? 0.6 : 0.3} depthWrite={false} />
+              <meshBasicMaterial
+                color={color}
+                transparent
+                opacity={isHovered ? 0.6 : 0.3}
+                depthWrite={false}
+              />
             </mesh>
             <lineSegments visible={showBrushGuide}>
               <edgesGeometry args={[new THREE.BoxGeometry(1.01, 1.01, 1.01)]} />
-              <lineBasicMaterial color={isHovered ? '#ffff00' : '#888888'} transparent opacity={0.6} />
+              <lineBasicMaterial
+                color={isHovered ? '#ffff00' : '#444444'}
+                transparent
+                opacity={0.6}
+              />
             </lineSegments>
           </group>
         );

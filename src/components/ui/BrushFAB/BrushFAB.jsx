@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import styled from 'styled-components';
 import { useBlockStore } from '../../../store/blockStore';
 
@@ -106,15 +106,15 @@ const Tooltip = styled.div`
 `;
 
 export default function BrushFAB() {
-  const { 
-    brushMode, 
-    toggleBrushMode, 
-    brushOrientation, 
+  const {
+    brushMode,
+    toggleBrushMode,
+    brushOrientation,
     setBrushOrientation,
     brushType,
-    setBrushType
+    setBrushType,
   } = useBlockStore();
-  
+
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleMenu = () => setIsOpen(!isOpen);
@@ -138,35 +138,30 @@ export default function BrushFAB() {
 
       <OptionList $isOpen={isOpen}>
         {/* Toggle Brush Mode Entirely */}
-        <SubFAB 
-          $isSelected={brushMode} 
-          onClick={toggleBrushMode}
-        >
+        <SubFAB $isSelected={brushMode} onClick={toggleBrushMode}>
           {brushMode ? '🖌️' : '🔘'}
           <Tooltip>{brushMode ? 'Desativar Pincel' : 'Ativar Pincel'}</Tooltip>
         </SubFAB>
 
         {/* Orientation: Vertical */}
-        <SubFAB 
-          $isSelected={brushMode && brushOrientation === 'vertical'} 
+        <SubFAB
+          $isSelected={brushMode && brushOrientation === 'vertical'}
           onClick={() => handleModeChange('vertical')}
         >
-          ║
-          <Tooltip>Vertical</Tooltip>
+          ║<Tooltip>Vertical</Tooltip>
         </SubFAB>
 
         {/* Orientation: Horizontal */}
-        <SubFAB 
-          $isSelected={brushMode && brushOrientation === 'horizontal'} 
+        <SubFAB
+          $isSelected={brushMode && brushOrientation === 'horizontal'}
           onClick={() => handleModeChange('horizontal')}
         >
-          ═
-          <Tooltip>Horizontal</Tooltip>
+          ═<Tooltip>Horizontal</Tooltip>
         </SubFAB>
 
         {/* Type: Remove */}
-        <SubFAB 
-          $isSelected={brushMode && brushType === 'remove'} 
+        <SubFAB
+          $isSelected={brushMode && brushType === 'remove'}
           onClick={() => handleTypeChange('remove')}
         >
           🧹
@@ -174,8 +169,8 @@ export default function BrushFAB() {
         </SubFAB>
 
         {/* Type: Add */}
-        <SubFAB 
-          $isSelected={brushMode && brushType === 'add'} 
+        <SubFAB
+          $isSelected={brushMode && brushType === 'add'}
           onClick={() => handleTypeChange('add')}
         >
           ✏️

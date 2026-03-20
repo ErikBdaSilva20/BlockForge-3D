@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import styled from 'styled-components';
 import { SHORTCUTS, SHORTCUT_CATEGORIES } from '../../../config/shortcuts';
 
@@ -52,8 +52,13 @@ const Panel = styled.div`
     padding: 30px 40px;
   }
 
-  &::-webkit-scrollbar { width: 4px; }
-  &::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+  }
 `;
 
 const PanelTitle = styled.h2`
@@ -110,7 +115,10 @@ const CloseBtn = styled.button`
   border-radius: 6px;
   cursor: pointer;
   font-size: 12px;
-  &:hover { background: #2a2a2a; color: #fff; }
+  &:hover {
+    background: #2a2a2a;
+    color: #fff;
+  }
 `;
 
 export default function ShortcutsPanel() {
@@ -118,27 +126,31 @@ export default function ShortcutsPanel() {
 
   return (
     <>
-      <FloatingBtn onClick={() => setOpen(true)}>
-        ⌨ Atalhos
-      </FloatingBtn>
+      <FloatingBtn onClick={() => setOpen(true)}>⌨ Atalhos</FloatingBtn>
 
       {open && (
         <Overlay onClick={() => setOpen(false)}>
           <Panel onClick={(e) => e.stopPropagation()}>
             <PanelTitle>Atalhos & Comandos</PanelTitle>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                gap: '20px',
+              }}
+            >
               {SHORTCUT_CATEGORIES.map((cat) => (
                 <div key={cat}>
                   <CategoryTitle>{cat}</CategoryTitle>
-                {SHORTCUTS.filter(s => s.category === cat).map((s, i) => (
-                  <Row key={i}>
-                    <KeyBadge>{s.keys}</KeyBadge>
-                    <ActionText>{s.action}</ActionText>
-                  </Row>
-                ))}
-              </div>
-            ))}
+                  {SHORTCUTS.filter((s) => s.category === cat).map((s, i) => (
+                    <Row key={i}>
+                      <KeyBadge>{s.keys}</KeyBadge>
+                      <ActionText>{s.action}</ActionText>
+                    </Row>
+                  ))}
+                </div>
+              ))}
 
               <CloseBtn onClick={() => setOpen(false)}>Fechar</CloseBtn>
             </div>
