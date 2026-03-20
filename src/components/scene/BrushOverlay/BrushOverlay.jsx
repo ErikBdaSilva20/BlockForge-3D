@@ -104,14 +104,14 @@ export default function BrushOverlay() {
     }
   });
 
-  if (!brushMode || !showBrushGuide) return null;
+  if (!brushMode) return null;
 
   const markColor = brushType === 'remove' ? '#ff4444' : brushType === 'select' ? '#55ccff' : '#00e5ff';
 
   return (
     <group>
       {/* Camada de guia (plano semi-transparente na layer atual) */}
-      {brushOrientation === 'horizontal' && (
+      {brushOrientation === 'horizontal' && showBrushGuide && (
         <mesh
           rotation={[-Math.PI / 2, 0, 0]}
           position={[0, brushLayer + 0.01, 0]}
