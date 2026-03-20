@@ -16,6 +16,7 @@ export default function Ground() {
     <mesh 
       rotation={[-Math.PI / 2, 0, 0]} 
       position={[0, -0.01, 0]} 
+      userData={{ isTarget: true }}
       onPointerDown={(e) => {
         if (brushMode || isEraseMode) return;
         if (e.button !== 0 || isDragging) return;
