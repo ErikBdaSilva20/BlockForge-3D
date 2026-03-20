@@ -14,11 +14,24 @@ import Lights from '../Lights';
 import World from '../World/World';
 
 function SceneContent() {
+  const [shiftPressed, setShiftPressed] = React.useState(false);
   const blocks = useBlockStore((state) => state.blocks);
   const brushMode = useBlockStore((state) => state.brushMode);
+  const brushLayer = useBlockStore((state) => state.brushLayer);
   const controlsRef = useRef();
-
   const isMobile = window.innerWidth <= 768;
+
+  // Track shift key globally for the scene
+  useEffect(() => {
+    const handleKeyDown = (e) => { if (e.key === 'Shift') setShiftPressed(true); };
+    const handleKeyUp = (e) => { if (e.key === 'Shift') setShiftPressed(false); };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
 
   // Intercept scroll in brush mode to change layer instead of zoom
   const handleWheel = useCallback(
@@ -49,17 +62,17 @@ function SceneContent() {
         ref={controlsRef}
         makeDefault
         mouseButtons={{
-          LEFT: brushMode ? -1 : THREE.MOUSE.ROTATE,
+          LEFT: THREE.MOUSE.ROTATE,
           MIDDLE: THREE.MOUSE.PAN,
           RIGHT: THREE.MOUSE.ROTATE,
         }}
         touches={{
-          ONE: brushMode && isMobile ? THREE.TOUCH.NONE : THREE.TOUCH.ROTATE,
-          TWO: brushMode && isMobile ? THREE.TOUCH.NONE : THREE.TOUCH.DOLLY_PAN,
+          ONE: THREE.TOUCH.ROTATE,
+          TWO: THREE.TOUCH.DOLLY_PAN,
         }}
-        enableRotate={true}
-        enablePan={true}
-        enableZoom={true}
+        enableRotate={!brushMode || shiftPressed}
+        enablePan={!brushMode || shiftPressed}
+        enableZoom={!brushMode || shiftPressed}
         minDistance={5}
         maxDistance={45}
         maxPolarAngle={Math.PI / 2 - 0.05}

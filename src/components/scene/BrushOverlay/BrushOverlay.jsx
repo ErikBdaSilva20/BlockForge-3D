@@ -47,8 +47,8 @@ export default function BrushOverlay() {
     if (!brushMode) return;
 
     const onDown = (e) => {
-      // Pincel agora é no CLIQUE ESQUERDO (0) e o Direito (2) mexe a tela
-      if (e.button !== 0) return;
+      // Pincel agora é no CLIQUE ESQUERDO (0), e IGNORA se o Shift estiver pressionado
+      if (e.button !== 0 || e.shiftKey) return;
       setIsPainting(true);
     };
     const onUp = () => {
