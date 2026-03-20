@@ -16,8 +16,6 @@ import React, { useRef, useEffect, useCallback } from 'react';
 function SceneContent() {
   const blocks = useBlockStore((state) => state.blocks);
   const brushMode = useBlockStore((state) => state.brushMode);
-  const brushLayer = useBlockStore((state) => state.brushLayer);
-  const isPainting = useBlockStore((state) => state.isPainting);
   const controlsRef = useRef();
 
   const isMobile = window.innerWidth <= 768;
@@ -35,25 +33,8 @@ function SceneContent() {
   useEffect(() => {
     const canvas = document.querySelector('canvas');
     if (!canvas) return;
-    
-    if (brushMode) {
-      canvas.addEventListener('wheel', handleWheel, { passive: false });
-      // Disable OrbitControls zoom in brush mode
-      if (controlsRef.current) {
-        controlsRef.current.enableZoom = false;
-      }
-    } else {
-      if (controlsRef.current) {
-        controlsRef.current.enableZoom = true;
-      }
-    }
-
-    return () => {
-      canvas.removeEventListener('wheel', handleWheel);
-      if (controlsRef.current) {
-        controlsRef.current.enableZoom = true;
-      }
-    };
+    canvas.addEventListener('wheel', handleWheel, { passive: false });
+    return () => canvas.removeEventListener('wheel', handleWheel);
   }, [brushMode, handleWheel]);
 
   return (
@@ -61,20 +42,21 @@ function SceneContent() {
       <color attach="background" args={['#000000']} />
       <Lights />
       
-      <OrbitControls 
+      <OrbitControls
         ref={controlsRef}
-        makeDefault 
+        makeDefault
         mouseButtons={{
-          LEFT: THREE.MOUSE.ROTATE, 
-          MIDDLE: THREE.MOUSE.PAN, 
-          RIGHT: THREE.MOUSE.ROTATE 
+          LEFT: brushMode ? -1 : THREE.MOUSE.ROTATE,
+          MIDDLE: THREE.MOUSE.PAN,
+          RIGHT: THREE.MOUSE.ROTATE,
         }}
         touches={{
           ONE: (brushMode && isMobile) ? THREE.TOUCH.NONE : THREE.TOUCH.ROTATE,
           TWO: (brushMode && isMobile) ? THREE.TOUCH.NONE : THREE.TOUCH.DOLLY_PAN
         }}
-        enableRotate={!(brushMode && isMobile)}
-        enablePan={!(brushMode && isMobile)}
+        enableRotate={!brushMode}
+        enablePan={!brushMode}
+        enableZoom={!brushMode}
         minDistance={5}
         maxDistance={45}
         maxPolarAngle={Math.PI / 2 - 0.05}
@@ -88,7 +70,14 @@ function SceneContent() {
         <WorldBoundsBox />
         
         {blocks.map((block) => (
-          <Block key={block.id} id={block.id} position={block.position} type={block.type} />
+          <Block
+            key={block.id}
+            id={block.id}
+            position={block.position}
+            type={block.type}
+            rotation={block.rotation}
+            isFlipped={block.isFlipped}
+          />
         ))}
         <GhostBlock />
         <BrushOverlay />

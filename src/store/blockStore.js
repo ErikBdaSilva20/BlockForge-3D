@@ -4,6 +4,7 @@ import { FALLBACK_BLOCKS } from '../config/blockTypes';
 import { fetchMinecraftBlocks } from '../services/minecraftApi';
 import { adaptMinecraftBlocks } from '../adapters/blockAdapter';
 import { WORLD_SIZES } from '../utils/constants/worldSizes';
+import { snapToGrid } from '../utils/math/snapToGrid';
 
 function isInsideWorldDynamic(position, worldSize) {
   const [x, y, z] = position;
@@ -46,6 +47,9 @@ export const useBlockStore = create((set, get) => ({
   brushOrientation: 'horizontal', // 'horizontal' or 'vertical'
   isEraseMode: false, // New: Toggle for one-click removal
   isPainting: false, // New: Tracks if user is currently painting/dragging the brush
+  showBrushGuide: true, // Variável para mostrar/esconder linhas do pincel
+  currentRotation: 0, // New: Rotation for new block placement (0, 1, 2, 3)
+  currentFlipped: false, // New: Whether new block is upside down
 
   // History Methods
   _pushHistory: (newBlocks) => {
@@ -103,7 +107,29 @@ export const useBlockStore = create((set, get) => ({
     );
     if (exists) return;
 
-    const newBlocks = [...blocks, { id: uuidv4(), position, type }];
+    const newBlocks = [...blocks, { 
+      id: uuidv4(), 
+      position, 
+      type, 
+      rotation: get().currentRotation || 0,
+      isFlipped: get().currentFlipped || false
+    }];
+    get()._pushHistory(newBlocks);
+  },
+
+  rotateBlock: (id) => {
+    const { blocks } = get();
+    const newBlocks = blocks.map(b => 
+      b.id === id ? { ...b, rotation: ((b.rotation || 0) + 1) % 4 } : b
+    );
+    get()._pushHistory(newBlocks);
+  },
+
+  flipBlock: (id) => {
+    const { blocks } = get();
+    const newBlocks = blocks.map(b => 
+      b.id === id ? { ...b, isFlipped: !b.isFlipped } : b
+    );
     get()._pushHistory(newBlocks);
   },
 
@@ -199,7 +225,12 @@ export const useBlockStore = create((set, get) => ({
     isEraseMode: false
   })),
 
+  setCurrentRotation: (val) => set({ currentRotation: val % 4 }),
+  cycleRotation: () => set((state) => ({ currentRotation: (state.currentRotation + 1) % 4 })),
+  toggleCurrentFlipped: () => set((state) => ({ currentFlipped: !state.currentFlipped })),
+
   setBrushOrientation: (orientation) => set({ brushOrientation: orientation }),
+  toggleBrushGuide: () => set((state) => ({ showBrushGuide: !state.showBrushGuide })),
 
   setBrushDirection: (dir) => set({ brushDirection: dir }),
   setBrushType: (type) => set({ brushType: type }),
@@ -232,9 +263,13 @@ export const useBlockStore = create((set, get) => ({
       }
     } else {
       // Modo HORIZONTAL
-      if (brushType === 'add' || brushType === 'remove' || brushType === 'select') {
+      if (brushType === 'add') {
         const snappedPos = snapToGrid([x, brushLayer, z]);
         linePositions.push(snappedPos);
+      } else if (brushType === 'remove' || brushType === 'select') {
+        // Se estiver removendo ou selecionando, o Y pode vir do bloco sob o cursor (dinâmico)
+        // para facilitar selecionar blocos fora da camada fixa
+        linePositions.push(snapToGrid([x, startY, z]));
       }
     }
 

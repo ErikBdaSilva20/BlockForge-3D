@@ -16,10 +16,12 @@ export function adaptMinecraftBlocks(apiBlocks) {
     
     return {
       id: idStr,
-      name: block.displayName || block.name || 'Unknown',
+      name: block.name || idStr.replace('mc:', ''),
       label: block.displayName || block.name || 'Unknown',
       type: block.name || idStr.replace('mc:', ''),
       texture: block.textureUrl || block.url || null,
+      textures: block.textures || null,
+      renderType: block.renderType || 'cube',
       category: block.material || 'geral',
       color: materialColor,
       transparent: block.transparent || false,

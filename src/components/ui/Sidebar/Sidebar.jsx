@@ -372,6 +372,11 @@ export default function Sidebar() {
     setBrushOrientation,
     isEraseMode,
     toggleEraseMode,
+    cycleRotation,
+    currentFlipped,
+    toggleCurrentFlipped,
+    showBrushGuide,
+    toggleBrushGuide,
   } = useBlockStore();
   const [isOpen, setIsOpen] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -582,6 +587,24 @@ export default function Sidebar() {
 
         <Divider />
 
+        {/* ---- ORIENTATION ---- */}
+        <SectionLabel>Orientação do Bloco</SectionLabel>
+        <ButtonRow>
+          <SmallBtn onClick={cycleRotation}>🔄 Girar (R)</SmallBtn>
+          <SmallBtn 
+            onClick={toggleCurrentFlipped}
+            style={{ 
+              backgroundColor: currentFlipped ? 'rgba(0, 229, 255, 0.1)' : '#222',
+              color: currentFlipped ? '#00e5ff' : '#aaa',
+              borderColor: currentFlipped ? 'rgba(0, 229, 255, 0.4)' : '#333'
+            }}
+          >
+            {currentFlipped ? '⏫ Invertido' : '⏬ Normal (F)'}
+          </SmallBtn>
+        </ButtonRow>
+
+        <Divider />
+
         {/* ---- SETTINGS ---- */}
         <SectionLabel>Configurações</SectionLabel>
 
@@ -593,6 +616,11 @@ export default function Sidebar() {
         <ToggleRow>
           <ToggleLabel>Bordas do Mundo</ToggleLabel>
           <ToggleSwitch $active={showWorldBounds} onClick={toggleWorldBounds} />
+        </ToggleRow>
+
+        <ToggleRow>
+          <ToggleLabel>Guias do Pincel</ToggleLabel>
+          <ToggleSwitch $active={showBrushGuide} onClick={toggleBrushGuide} />
         </ToggleRow>
 
         <SizeSelect value={worldSize.id} onChange={handleWorldSizeChange}>
@@ -728,6 +756,7 @@ export default function Sidebar() {
         <BlocksGrid>
           {availableBlocks
             .filter((b) => (b.label || '').toLowerCase().includes((searchTerm || '').toLowerCase()))
+            .slice(0, 80)
             .map((block) => (
               <BlockItem
                 key={block.id}
@@ -740,6 +769,11 @@ export default function Sidebar() {
                 }}
               />
             ))}
+          {availableBlocks.filter((b) => (b.label || '').toLowerCase().includes((searchTerm || '').toLowerCase())).length > 80 && (
+            <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '10px', color: '#666', fontSize: '11px' }}>
+              Mostrando os primeiros 80 resultados. Tente uma busca mais específica.
+            </div>
+          )}
         </BlocksGrid>
       </BlocksDrawer>
     </>

@@ -16,6 +16,10 @@ const MenuContainer = styled.div`
     bottom: 85px;
     right: 20px;
   }
+
+  @media (min-width: 769px) {
+    display: none;
+  }
 `;
 
 const MainFAB = styled.button`

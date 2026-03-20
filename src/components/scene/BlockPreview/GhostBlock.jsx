@@ -4,10 +4,20 @@ import { useBlockStore } from '../../../store/blockStore';
 import { snapToGrid } from '../../../utils/math/snapToGrid';
 
 export default function GhostBlock() {
-  const { isDragging, draggedType, addBlock, worldSize } = useBlockStore();
+  const { isDragging, draggedType, addBlock, worldSize, currentRotation, cycleRotation, currentFlipped, toggleCurrentFlipped } = useBlockStore();
   const meshRef = useRef();
   const currentPosRef = useRef(null);
   const isValidRef = useRef(false);
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      const key = e.key.toLowerCase();
+      if (key === 'r') cycleRotation();
+      if (key === 'f') toggleCurrentFlipped();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [cycleRotation, toggleCurrentFlipped]);
   
   const { raycaster, camera, pointer, scene } = useThree();
 
@@ -71,7 +81,13 @@ export default function GhostBlock() {
   if (!isDragging) return null;
 
   return (
-    <mesh ref={meshRef} name="Ghost" userData={{ isPreview: true }} visible={false}>
+    <mesh 
+      ref={meshRef} 
+      name="Ghost" 
+      userData={{ isPreview: true }} 
+      visible={false}
+      rotation={[currentFlipped ? Math.PI : 0, currentRotation * (Math.PI / 2), 0]}
+    >
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial transparent opacity={0.5} />
     </mesh>

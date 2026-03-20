@@ -82,39 +82,39 @@ const TEXTURE_NAME_MAP = {
   red_mushroom_block: 'red_mushroom_block',
   composter: 'composter_side',
   lectern: 'lectern_front',
+  lava: 'lava_still',
+  water: 'water_still',
+  mangrove_roots: 'mangrove_roots_side',
+  muddy_mangrove_roots: 'muddy_mangrove_roots_side',
 };
 
 // Sufixos que não são blocos cúbicos puros - não terão texturas diretas
 // e não renderizam bem como cubos simples
 const NON_CUBE_SUFFIXES = [
-  '_slab', '_stairs', '_wall', '_fence', '_sign', '_door',
+  '_wall', '_fence', '_sign', '_door',
   '_trapdoor', '_pressure_plate', '_button', '_fence_gate',
-  '_banner', '_bed', '_head', '_skull', '_candle', '_torch',
-  '_plant', '_sapling', '_flower', '_bush', '_crop', '_shrub',
-  '_rail', '_lantern', '_rod', '_pot', '_hanging_sign',
-  '_fan', '_coral', '_cluster', '_bud', '_point', '_roots',
-  '_sprouts', '_tulip', '_orchid', '_allium', '_cornflower',
-  '_blossom', '_hyacinth', '_daisy', '_poppy', '_lily',
+  '_banner', '_bed', '_head', '_skull', '_candle',
+  '_rail', '_rod', '_pot', '_hanging_sign',
+  '_fan', '_coral', '_cluster', '_bud', '_point',
+  '_sprouts',
+  '_blossom', '_hyacinth',
 ];
 
-// Blocos técnicos/invisíveis ou que não são cubos sólidos para excluir
+const PLANT_SUFFIXES = [
+  '_plant', '_sapling', '_flower', '_bush', '_crop', '_shrub',
+  '_roots', '_tulip', '_orchid', '_allium', '_cornflower',
+  '_daisy', '_poppy', '_lily', 'dandelion', 'blue_orchid', 'sageBrush',
+  'rose', 'grass', 'fern', 'mushroom', 'sugar_cane', 'bamboo', 'propagule',
+  'roots', 'sprouts', 'fungus', 'torch', 'vines', 'seagrass', 'kelp', 'azalea',
+  'blossom', 'clover', 'leaf', 'leaves', 'coral_fan', 'coral', 'sea_pickle'
+];
+
+// Blocos técnicos/invisíveis para excluir (manter o essencial)
 const EXCLUDED_NAMES = [
   'air', 'cave_air', 'void_air', 'structure_void', 'barrier',
   'light', 'moving_piston', 'piston_head', 'command_block',
   'chain_command_block', 'repeating_command_block', 'structure_block',
   'jigsaw', 'frosted_ice', 'spawner', 'trial_spawner',
-  'petrified_oak_slab', 'budding_amethyst', 'conduit', 'beacon',
-  'end_portal_frame', 'end_gateway', 'dragon_egg', 'bell', 'cauldron',
-  'torch', 'lantern', 'ladder', 'vine', 'glow_lichen', 'sculck_vein',
-  'redstone_wire', 'redstone_torch', 'repeater', 'comparator',
-  'lever', 'tripwire', 'scaffolding', 'lily_pad', 'turtle_egg',
-  'frogspawn', 'composter', 'cake', 'brewing_stand', 'cake',
-  'campfire', 'soul_campfire', 'bamboo_sapling', 'sweet_berry_bush',
-  'cave_vines', 'big_dripleaf', 'small_dripleaf', 'glow_berries',
-  'spore_blossom', 'azalea', 'flowering_azalea', 'kelp', 'seagrass',
-  'tall_grass', 'large_fern', 'rose_bush', 'peony', 'lilac',
-  'sunflower', 'chorus_flower', 'chorus_plant', 'sea_pickle',
-  'cactus', 'sugar_cane', 'bamboo', 'bamboo_plant',
 ];
 
 // Prefixos de blocos que são variantes técnicas (colocados em paredes, etc)
@@ -127,67 +127,94 @@ export async function fetchMinecraftBlocks() {
     const data = await fetchWithCache(MC_DATA_URL);
     
     const solidBlocks = data.filter(block => {
-      // Precisa ser um bloco com bounding box sólida
-      if (block.boundingBox !== 'block') return false;
-      
-      // Excluir transparentes (manter vidros e gelo)
-      if (block.transparent && 
-          !block.name.includes('glass') && 
-          !block.name.includes('ice') && 
-          !block.name.includes('slime') && 
-          !block.name.includes('honey')) {
+      // Excluir blocos técnicos puramente invisíveis
+      if (EXCLUDED_NAMES.some(exc => block.name === exc)) {
         return false;
       }
 
-      // Excluir blocos técnicos
-      if (EXCLUDED_NAMES.some(exc => block.name === exc || block.name.includes(exc))) {
-        return false;
-      }
-
-      // Excluir prefixos técnicos
+      // Excluir prefixos técnicos (manter apenas o que pode ser colocado)
       if (EXCLUDED_PREFIXES.some(prefix => block.name.startsWith(prefix))) {
         return false;
       }
 
-      // Excluir blocos não-cúbicos (escadas, slabs, cercas, portas, etc)
-      if (NON_CUBE_SUFFIXES.some(suffix => block.name.endsWith(suffix) || block.name.includes(suffix + '_'))) {
+      // Manter variantes especiais essenciais, mas filtrar duplicatas de "wall_"
+      if (block.name.includes('infested_') || block.name.includes('suspicious_')) {
         return false;
       }
-
-      // Excluir variantes especiais
-      if (block.name.includes('candle_cake') || 
-          block.name.includes('_cauldron') ||
-          block.name.includes('wall_torch') ||
-          block.name.includes('wall_fan') ||
-          block.name.includes('infested_')) {
-        return false;
-      }
-
+      
       return true;
     });
 
     return solidBlocks.map(block => {
-      const textureName = TEXTURE_NAME_MAP[block.name] || block.name;
+      let textureName = TEXTURE_NAME_MAP[block.name] || block.name;
+      
+      let renderType = 'cube';
+      if (block.name.includes('torch')) renderType = 'torch';
+      else if (block.name.includes('stairs')) {
+        renderType = 'stairs';
+        // Limpeza inteligente de nome para texturas de escada
+        textureName = textureName.replace('_stairs', '');
+        if (textureName.includes('oak') || textureName.includes('birch') || textureName.includes('spruce') || 
+            textureName.includes('jungle') || textureName.includes('acacia') || textureName.includes('dark_oak') ||
+            textureName.includes('mangrove') || textureName.includes('cherry') || textureName.includes('bamboo')) {
+            if (!textureName.includes('planks') && !textureName.includes('log')) textureName += '_planks';
+        }
+        if (textureName.includes('stone_brick')) textureName = 'stone_bricks';
+      }
+      else if (block.name.includes('slab')) {
+        renderType = 'slab';
+        textureName = textureName.replace('_slab', '');
+        if (textureName.includes('oak') || textureName.includes('birch') || textureName.includes('spruce') || 
+            textureName.includes('jungle') || textureName.includes('acacia') || textureName.includes('dark_oak') ||
+            textureName.includes('mangrove') || textureName.includes('cherry') || textureName.includes('bamboo')) {
+            if (!textureName.includes('planks') && !textureName.includes('log')) textureName += '_planks';
+        }
+        if (textureName.includes('stone_brick')) textureName = 'stone_bricks';
+      }
+      else if (PLANT_SUFFIXES.some(s => block.name.endsWith(s) || block.name.includes(s) || block.name === s)) {
+        renderType = 'plant';
+      }
+      else if (block.name.includes('lantern')) renderType = 'torch';
+
+      // Lógica para múltiplas texturas (Topo/Lado)
+      let textures = {
+        all: `${TEXTURE_BASE}/${textureName}.png`
+      };
+
+      if (block.name.includes('grass_block')) {
+        textures.top = `${TEXTURE_BASE}/grass_block_top.png`;
+        textures.side = `${TEXTURE_BASE}/grass_block_side.png`;
+        textures.bottom = `${TEXTURE_BASE}/dirt.png`;
+      } else if (block.name.endsWith('_log')) {
+        textures.top = `${TEXTURE_BASE}/${block.name}_top.png`;
+        textures.side = `${TEXTURE_BASE}/${block.name}.png`;
+        textures.bottom = `${TEXTURE_BASE}/${block.name}_top.png`;
+      } else if (block.name.includes('tnt')) {
+        textures.top = `${TEXTURE_BASE}/tnt_top.png`;
+        textures.side = `${TEXTURE_BASE}/tnt_side.png`;
+        textures.bottom = `${TEXTURE_BASE}/tnt_bottom.png`;
+      }
+
       return {
         ...block,
-        textureUrl: `${TEXTURE_BASE}/${textureName}.png`
+        renderType,
+        textures,
+        textureUrl: textures.all // Retrocompatibilidade
       };
     });
   } catch (error) {
     console.warn('Utilizando fallback manual de blocos, API falhou', error);
     return [
-      { id: 'mc:grass_block', name: 'grass_block', displayName: 'Grass Block', boundingBox: 'block', transparent: false, url: `${TEXTURE_BASE}/grass_block_side.png` },
-      { id: 'mc:stone', name: 'stone', displayName: 'Stone', boundingBox: 'block', transparent: false, url: `${TEXTURE_BASE}/stone.png` },
-      { id: 'mc:oak_planks', name: 'oak_planks', displayName: 'Oak Planks', boundingBox: 'block', transparent: false, url: `${TEXTURE_BASE}/oak_planks.png` },
-      { id: 'mc:cobblestone', name: 'cobblestone', displayName: 'Cobblestone', boundingBox: 'block', transparent: false, url: `${TEXTURE_BASE}/cobblestone.png` },
-      { id: 'mc:bricks', name: 'bricks', displayName: 'Bricks', boundingBox: 'block', transparent: false, url: `${TEXTURE_BASE}/bricks.png` },
-      { id: 'mc:diamond_block', name: 'diamond_block', displayName: 'Diamond', boundingBox: 'block', transparent: false, url: `${TEXTURE_BASE}/diamond_block.png` },
-      { id: 'mc:dirt', name: 'dirt', displayName: 'Dirt', boundingBox: 'block', transparent: false, url: `${TEXTURE_BASE}/dirt.png` },
-      { id: 'mc:sand', name: 'sand', displayName: 'Sand', boundingBox: 'block', transparent: false, url: `${TEXTURE_BASE}/sand.png` },
-      { id: 'mc:oak_log', name: 'oak_log', displayName: 'Oak Log', boundingBox: 'block', transparent: false, url: `${TEXTURE_BASE}/oak_log.png` },
-      { id: 'mc:iron_block', name: 'iron_block', displayName: 'Iron Block', boundingBox: 'block', transparent: false, url: `${TEXTURE_BASE}/iron_block.png` },
-      { id: 'mc:gold_block', name: 'gold_block', displayName: 'Gold Block', boundingBox: 'block', transparent: false, url: `${TEXTURE_BASE}/gold_block.png` },
-      { id: 'mc:glass', name: 'glass', displayName: 'Glass', boundingBox: 'block', transparent: true, url: `${TEXTURE_BASE}/glass.png` },
+      { id: 'mc:grass_block', name: 'grass_block', displayName: 'Grass Block', textures: { top: `${TEXTURE_BASE}/grass_block_top.png`, side: `${TEXTURE_BASE}/grass_block_side.png`, bottom: `${TEXTURE_BASE}/dirt.png` } },
+      { id: 'mc:stone', name: 'stone', displayName: 'Stone', textures: { all: `${TEXTURE_BASE}/stone.png` } },
+      { id: 'mc:oak_planks', name: 'oak_planks', displayName: 'Oak Planks', textures: { all: `${TEXTURE_BASE}/oak_planks.png` } },
+      { id: 'mc:oak_stairs', name: 'oak_stairs', displayName: 'Oak Stairs', renderType: 'stairs', textures: { all: `${TEXTURE_BASE}/oak_planks.png` } },
+      { id: 'mc:oak_slab', name: 'oak_slab', displayName: 'Oak Slab', renderType: 'slab', textures: { all: `${TEXTURE_BASE}/oak_planks.png` } },
+      { id: 'mc:poppy', name: 'poppy', displayName: 'Poppy (Flower)', renderType: 'plant', textures: { all: `${TEXTURE_BASE}/poppy.png` } },
+      { id: 'mc:torch', name: 'torch', displayName: 'Torch', renderType: 'torch', textures: { all: `${TEXTURE_BASE}/torch.png` } },
+      { id: 'mc:cobblestone', name: 'cobblestone', displayName: 'Cobblestone', textures: { all: `${TEXTURE_BASE}/cobblestone.png` } },
+      { id: 'mc:bricks', name: 'bricks', displayName: 'Bricks', textures: { all: `${TEXTURE_BASE}/bricks.png` } },
+      { id: 'mc:glass', name: 'glass', displayName: 'Glass', transparent: true, textures: { all: `${TEXTURE_BASE}/glass.png` } },
     ];
   }
 }
