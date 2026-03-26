@@ -1,6 +1,6 @@
 import { OrbitControls } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
-import { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { useBlockStore } from '../../../store/blockStore';
 import Block from '../Block/Block';
@@ -23,8 +23,12 @@ function SceneContent() {
 
   // Track shift key globally for the scene
   useEffect(() => {
-    const handleKeyDown = (e) => { if (e.key === 'Shift') setShiftPressed(true); };
-    const handleKeyUp = (e) => { if (e.key === 'Shift') setShiftPressed(false); };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Shift') setShiftPressed(true);
+    };
+    const handleKeyUp = (e) => {
+      if (e.key === 'Shift') setShiftPressed(false);
+    };
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     return () => {
